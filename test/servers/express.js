@@ -28,9 +28,9 @@ create.use(express.json({limit: '50mb'}));
 
 
 // predefined return values for the "create" path
-const single = require('../../json/single-key.json');
-const many = require('../../json/many-keys.json');
-const big = require('../../json/big-array.json');
+const single = require('../data/json/single-key.json');
+const many = require('../data/json/many-keys.json');
+const big = require('../data/json/big-array.json');
 
 
 // parses what should be a tracked object and stringifies it, returning
