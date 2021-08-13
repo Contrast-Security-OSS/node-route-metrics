@@ -1,0 +1,23 @@
+api:
+  url: http://localhost:30080/Contrast
+  api_key: demo
+  service_key: 8JA4IS0DV3K1GEYP
+  user_name: agent_f2b26258-7dec-488f-bfd4-71265d3b699f@ContrastSecurity
+  enable: true
+
+assess:
+  enable: true
+
+agent:
+  logger:
+    level: debug
+  service:
+    enable: true
+    grpc: true
+    logger:
+      path: speedracer.log
+      level: WARN
+  array_request_sampling:
+    enable: true
+    threshold: 1000000
+    interval: 1000000
