@@ -54,5 +54,18 @@
       ],
       "type": "pwa-node"
     },
+    {
+      "name": "current[custom]",
+      "type": "pwa-node",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "env": {
+        "CSI_RM_TEMPLATE": "./test/data/template.js",
+        "CSI_RM_REPORTER": "csv2"
+      },
+      "program": "${relativeFile}"
+    },
   ]
 }
