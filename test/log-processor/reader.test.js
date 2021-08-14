@@ -11,7 +11,7 @@ const reader = require('../../lib/log-processor/reader');
 chai.use(chaiAsPromised);
 const {expect} = chai;
 
-const dataDir = './test/data/writer';
+const dataDir = './test/data/reader';
 
 // note that lines here doesn't mean newline terminated strings; it refers
 // to both newline-terminated characters and EOF-terminated characters.
