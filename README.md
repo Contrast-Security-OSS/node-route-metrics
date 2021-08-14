@@ -6,8 +6,8 @@ performance with and without `@contrast/agent` being loaded and active.
 
 `route-metrics` measures the elapsed time of http/https requests from the
 the time that the `request` event is emitted to the time the response's
-`end` function is called. Elapsed time is measure in microseconds, not
-milliseconds.
+`end` function is called. Elapsed time is measured in microseconds but is
+output in milliseconds by default.
 
 `route-metrics` writes a log file in which each line is JSON. the log files
 can be interpreted using the included `log-processor`.
@@ -74,6 +74,7 @@ The `route-metrics` log processor is also configured via environment variables.
 - `CSI_RM_REPORTER=csv`   # json is also a valid reporter. the json reporter is just a dump of the raw data.
 - `CSI_RM_OUTPUT=1`       # if numeric writes to that file descriptor, else writes to that file name.
 - `CSI_RM_TEMPLATE`       # a template that defines how the output is grouped (tbd)
+- `CSI_RM_MICROSECONDS`   # report times in microseconds instead of milliseconds. (json reporter ignores.)
 
 ## design philosophy
 
@@ -87,7 +88,7 @@ error to be thrown. Because the expected use is in a testing environment, this s
 it turns out to be a bad decision, appropriate fallbacks can be implemented.
 
 `route-metrics` is also written with minimal production dependencies. At this time `shimmer` is the
-only dependency.
+only one.
 
 ## limitations
 
