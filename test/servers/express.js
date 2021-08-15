@@ -60,7 +60,6 @@ echo.post('/echo', function(req, res, next) {
 
 // stringify the same string but not behind a membrane.
 echo.post('/noecho/', function(req, res, next) {
-  const many = require('../data/json/many-keys.json');
   res.send(JSON.stringify(many));
 });
 
