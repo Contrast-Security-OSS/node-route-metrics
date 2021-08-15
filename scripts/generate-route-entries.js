@@ -7,6 +7,7 @@
 const fs = require('fs');
 const fetch = require('node-fetch');
 
+const asyncPoolSize = process.env.POOL || 10;
 const min = process.env.MIN || 40;
 const max = process.env.MAX || 80;
 const randomMinMax = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
@@ -15,12 +16,12 @@ const targets = [
   {method: 'post', ep: '/echo', body: 'many-keys.json', n: randomMinMax(min, max)},
   {method: 'post', ep: '/noecho', body: 'many-keys.json', n: randomMinMax(min, max)},
   {method: 'get', ep: '/random-wait', n: randomMinMax(min, max)},
-  //{method: 'post', ep: '/meta', body: 'many-keys.json', n: randomMinMax(min, max)},
-  //{method: 'post', ep: '/read', body: 'many-keys.json', n: randomMinMax(min, max)},
+  {method: 'post', ep: '/meta', body: 'many-keys.json', n: randomMinMax(min, max)},
+  {method: 'post', ep: '/read', body: 'many-keys.json', n: randomMinMax(min, max)},
   {method: 'get', ep: '/info', n: randomMinMax(min, max)},
-  //{method: 'get', ep: '/wait/10', n: randomMinMax(min, max)},
-  //{method: 'get', ep: '/wait/100', n: randomMinMax(min, max)},
-  //{method: 'get', ep: '/wait/10/404', n: randomMinMax(min, max)},
+  {method: 'get', ep: '/wait/10', n: randomMinMax(min, max)},
+  {method: 'get', ep: '/wait/100', n: randomMinMax(min, max)},
+  {method: 'get', ep: '/wait/10/404', n: randomMinMax(min, max)},
 ];
 
 const args = process.argv.slice(2);
@@ -58,7 +59,7 @@ const host = process.env.host || 'http://localhost:8888';
 
 async function main101() {
   const done = [];
-  const xq = makeSimulPool(10);
+  const xq = makeAsyncPool(asyncPoolSize);
   const start = Date.now();
 
   while (requests.length > 0) {
@@ -109,19 +110,17 @@ function makeBodyMap() {
 
 // async pool executor
 
-function makeSimulPool(n) {
+function makeAsyncPool(n) {
   const promises = Array(n);
   const freeslots = [...promises.keys()];
   // execute fn
   async function xq(fn) {
     if (!freeslots.length) {
       await Promise.race(promises);
-      //console.log('waited for available slot', freeslots[0]);
     }
     const slot = freeslots.splice(0, 1)[0];
     promises[slot] = fn()
       .then(r => {
-        //console.log('resolving', slot, freeslots.length, promises.length);
         delete promises[slot];
         freeslots.push(slot);
         return r;
