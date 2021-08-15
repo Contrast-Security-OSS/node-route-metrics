@@ -51,7 +51,7 @@ reporter output in any case.
 
 ### csv reporter output
 
-The first line is the header line.
+The first line after the informational lines is the header line.
 
 The percentiles are calculated using the smallest value that is greater than
 or equal to the specified percentile of values; no interpolation is done.
@@ -93,5 +93,7 @@ only one.
 ## limitations
 
 - handles require'd files only
-- does not handle web sockets
+- does not report on web sockets
 - does not handle http2 (http/https only)
+- `log-processor` has minimal automated testing; manual testing has revealed no inconsistencies
+or errors.
