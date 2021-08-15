@@ -8,8 +8,11 @@ const fs = require('fs');
 const fetch = require('node-fetch');
 
 const asyncPoolSize = process.env.POOL || 10;
-const min = process.env.MIN || 40;
-const max = process.env.MAX || 80;
+let min = +(process.env.MIN || 40);
+let max = +(process.env.MAX || 80);
+if (process.env.ITERATIONS) {
+  min = max = +process.env.ITERATIONS;
+}
 const randomMinMax = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
 
 const targets = [
