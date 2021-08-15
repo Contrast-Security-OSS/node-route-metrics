@@ -26,7 +26,7 @@ const targets = [
 
 const args = process.argv.slice(2);
 
-// args are specified by the ep without the leading slash
+// routes are specified by the ep without the leading slash
 const requests = [];
 for (let i = 0; i < args.length; i++) {
   let t;
