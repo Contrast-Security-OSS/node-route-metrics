@@ -57,7 +57,7 @@ requests.forEach(r => {
 const bodyMap = makeBodyMap();
 const host = process.env.host || 'http://localhost:8888';
 
-async function main101() {
+async function main() {
   const done = [];
   const xq = makeAsyncPool(asyncPoolSize);
   const start = Date.now();
@@ -132,5 +132,8 @@ function makeAsyncPool(n) {
   return xq;
 }
 
-// eslint-disable-next-line no-console
-main101().then(r => console.log(r));
+main().then(r => {
+  r = r.map(r => `${r.method} ${r.ep} mean: ${r.mean}`);
+  // eslint-disable-next-line no-console
+  console.log(r);
+});
