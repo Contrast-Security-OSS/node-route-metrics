@@ -34,7 +34,7 @@ const big = require('../data/json/big-array.json');
 
 
 // parses what should be a tracked object and stringifies it, returning
-// stats with the original object.
+// stats but not the original object.
 echo.post('/meta', function(req, res, next) {
   const protocol = req.socket.encrypted ? 'https' : 'http';
   const t_start = Date.now();
@@ -52,9 +52,16 @@ echo.post('/meta', function(req, res, next) {
   res.send(response);
 });
 
+// stringify the string and return it
 echo.post('/echo', function(req, res, next) {
   const s = JSON.stringify(req.body);
   res.send(s);
+});
+
+// stringify the same string but not behind a membrane.
+echo.post('/noecho/', function(req, res, next) {
+  const map = {many, single, big};
+  res.send(JSON.stringify(map[req.params.json]));
 });
 
 read.post('/read', function(req, res, next) {
@@ -101,6 +108,13 @@ stop.post('/stop/:code', function(req, res, next) {
 
 app.get('/info', function(req, res, next) {
   res.send(JSON.stringify({info: {useful: 'things'}}));
+});
+
+app.get('/random-wait', function(req, res, next) {
+  const ms = Math.floor(Math.random() * 1000);
+  setTimeout(() => {
+    res.send({waited: ms});
+  }, ms);
 });
 
 app.get('/wait/:time/:code?', function(req, res, next) {
