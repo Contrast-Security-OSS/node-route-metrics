@@ -1,5 +1,7 @@
 'use strict';
 
+const path = require('path');
+
 const {checks} = require('./checks');
 
 const makeHeader = require('../../lib/writer/make-header');
@@ -7,10 +9,21 @@ const pdj = require('../../package.json');
 const serversPdj = require('../servers/package.json');
 const config = {LOG_FILE: 'route-metrics.log', OUTPUT_CONFIG: null};
 
+// on windows, mocha's bin is under the mocha directory, not node_modules. as
+// a result the resolution logic will find mocha's package.json, not the one
+// the test should really find. this probably should always set the path.
+const prevArgv = process.argv.slice();
+if (process.argv[1].endsWith('mocha')) {
+  process.argv[1] = path.resolve(process.cwd());
+}
+
 describe('make-header', function() {
   const argv = process.argv.slice();
   afterEach(function() {
     process.argv = argv;
+  });
+  after(function() {
+    process.argv = prevArgv;
   });
 
   it('fetches good information', function() {
