@@ -10,7 +10,7 @@
     "lib/**"
   ],
   "scripts": {
-    "test": "mocha $(find test -name '*.test.js')",
+    "test": "mocha 'test/**/*.test.js'",
     "test:cov": "nyc mocha $(find test -name '*.test.js')",
     "log-processor": "node ./lib/log-processor/index.js"
   },
