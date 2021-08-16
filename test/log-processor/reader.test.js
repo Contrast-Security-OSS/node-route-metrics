@@ -2,6 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
+const os = require('os');
 
 const chai = require('chai');
 const chaiAsPromised = require('chai-as-promised');
@@ -22,6 +23,18 @@ const files = [
   {name: `${dataDir}/frozen-reader-test.js`, lines: 101, chars: 3034, newlineEnd: true},
   {name: `${dataDir}/WARNING-README`, lines: 6, chars: 200, newlineEnd: true},
 ];
+
+// make the presumption that the user has git configured autocrlf true. adjust the
+// chars for the additional \r per \n.
+if (os.EOL === '\r\n') {
+  for (const f of files) {
+    let adjustment = f.lines;
+    if (!f.newlineEnd && f.lines) {
+      adjustment -= 1;
+    }
+    f.chars += adjustment;
+  }
+}
 
 describe('reader', function() {
 
