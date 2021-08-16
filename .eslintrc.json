@@ -3,7 +3,6 @@
   "env": {
     "node": true,
     "es6": true,
-    // NOTE: not all tests pass eslint
     "mocha": true
   },
 
