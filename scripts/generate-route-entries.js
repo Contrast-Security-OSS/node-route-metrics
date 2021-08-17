@@ -1,3 +1,4 @@
+#!/usr/bin/env node
 'use strict';
 
 /**
@@ -46,6 +47,7 @@ if (requests.length === 0) {
   /* eslint-disable */
   console.log('usage: generate request...');
   console.log('  valid requests', ep.join(', '));
+  console.log('  env vars=default: POOL=10, ITERATIONS, MIN=40, MAX=80');
   /* eslint-enable */
 
   process.exit(1);
