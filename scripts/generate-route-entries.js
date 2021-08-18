@@ -26,13 +26,20 @@ const targets = [
   {method: 'get', ep: '/wait/10', n: randomMinMax(min, max)},
   {method: 'get', ep: '/wait/100', n: randomMinMax(min, max)},
   {method: 'get', ep: '/wait/10/404', n: randomMinMax(min, max)},
+  {method: 'post', ep: '/noecho?name=ralph', body: 'many-keys.json', n: randomMinMax(min, max)},
+  {method: 'post', ep: '/noecho?name=alice', body: 'many-keys.json', n: randomMinMax(min, max)},
 ];
 
+let verbose = false;
 const args = process.argv.slice(2);
 
 // routes are specified by the ep without the leading slash
 const requests = [];
 for (let i = 0; i < args.length; i++) {
+  if (args[i] === '-v') {
+    verbose = true;
+    continue;
+  }
   let t;
   if (t = targets.find(t => t.ep.endsWith(args[i]))) {
     requests.push(Object.assign({}, t));
@@ -53,8 +60,9 @@ if (requests.length === 0) {
   process.exit(1);
 }
 
-
+let totalCount = 0;
 requests.forEach(r => {
+  totalCount += r.n;
   r.left = r.n;
   r.totalTime = 0;
 });
@@ -84,8 +92,9 @@ async function main() {
     }
   }
   await xq.done();
+  const et = Date.now() - start;
   // eslint-disable-next-line no-console
-  console.log('et', Date.now() - start);
+  console.log('et (ms)', et, 'ms per request', f2(et / totalCount));
   return done;
 }
 
@@ -137,7 +146,14 @@ function makeAsyncPool(n) {
   return xq;
 }
 
+function f2(n) {
+  return n.toFixed(2);
+}
+
 main().then(r => {
+  if (!verbose) {
+    return;
+  }
   r = r.map(r => `${r.method} ${r.ep} mean: ${r.mean}`);
   // eslint-disable-next-line no-console
   console.log(r);
