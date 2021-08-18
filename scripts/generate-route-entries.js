@@ -2,7 +2,7 @@
 'use strict';
 
 /**
- * tool to hit various end points on a server for testing an demos.
+ * tool to hit various end points on a server for testing and demos.
  */
 
 const fs = require('fs');
@@ -15,19 +15,20 @@ if (process.env.ITERATIONS) {
   min = max = +process.env.ITERATIONS;
 }
 const randomMinMax = (min, max) => Math.floor(Math.random() * (max - min + 1)) + min;
+const rmm = () => randomMinMax(min, max);
 
 const targets = [
-  {method: 'post', ep: '/echo', body: 'many-keys.json', n: randomMinMax(min, max)},
-  {method: 'post', ep: '/noecho', body: 'many-keys.json', n: randomMinMax(min, max)},
-  {method: 'get', ep: '/random-wait', n: randomMinMax(min, max)},
-  {method: 'post', ep: '/meta', body: 'many-keys.json', n: randomMinMax(min, max)},
-  {method: 'post', ep: '/read', body: 'many-keys.json', n: randomMinMax(min, max)},
-  {method: 'get', ep: '/info', n: randomMinMax(min, max)},
-  {method: 'get', ep: '/wait/10', n: randomMinMax(min, max)},
-  {method: 'get', ep: '/wait/100', n: randomMinMax(min, max)},
-  {method: 'get', ep: '/wait/10/404', n: randomMinMax(min, max)},
-  {method: 'post', ep: '/noecho?name=ralph', body: 'many-keys.json', n: randomMinMax(min, max)},
-  {method: 'post', ep: '/noecho?name=alice', body: 'many-keys.json', n: randomMinMax(min, max)},
+  {method: 'post', ep: '/echo', body: 'many-keys.json', n: rmm()},
+  {method: 'post', ep: '/noecho', body: 'many-keys.json', n: rmm()},
+  {method: 'get', ep: '/random-wait', n: rmm()},
+  {method: 'post', ep: '/meta', body: 'many-keys.json', n: rmm()},
+  {method: 'post', ep: '/read', body: 'many-keys.json', n: rmm()},
+  {method: 'get', ep: '/info', n: rmm()},
+  {method: 'get', ep: '/wait/10', n: rmm()},
+  {method: 'get', ep: '/wait/100', n: rmm()},
+  {method: 'get', ep: '/wait/10/404', n: rmm()},
+  {method: 'post', ep: '/noecho?name=ralph', body: 'many-keys.json', n: rmm()},
+  {method: 'post', ep: '/noecho?name=alice', body: 'many-keys.json', n: rmm()},
 ];
 
 let verbose = false;
