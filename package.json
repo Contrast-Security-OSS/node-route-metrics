@@ -8,7 +8,7 @@
   },
   "files": [
     "lib/**",
-    "example/test.js"
+    "example/template.js"
   ],
   "scripts": {
     "test": "mocha 'test/**/*.test.js'",
