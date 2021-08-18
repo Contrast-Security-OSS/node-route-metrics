@@ -16,7 +16,10 @@
     "log-processor": "node ./lib/log-processor/index.js"
   },
   "keywords": [],
-  "author": "",
+  "author": "Contrast Security, Inc.",
+  "contributors": [
+    "Bruce A. MacNaughton <bmacnaughton@gmail.com>"
+  ],
   "license": "MIT",
   "dependencies": {
     "shimmer": "^1.2.1"
