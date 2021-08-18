@@ -15,7 +15,9 @@
     "test:cov": "nyc mocha $(find test -name '*.test.js')",
     "log-processor": "node ./lib/log-processor/index.js"
   },
-  "keywords": [],
+  "keywords": [
+    "metrics", "performance", "measurement", "web", "server"
+  ],
   "author": "Contrast Security, Inc.",
   "contributors": [
     "Bruce A. MacNaughton <bmacnaughton@gmail.com>"
