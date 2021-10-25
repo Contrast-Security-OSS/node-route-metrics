@@ -73,9 +73,17 @@ The `route-metrics` log processor is also configured via environment variables.
 
 - `CSI_RM_REPORTER=csv`   # json is also a valid reporter. the json reporter is just a dump of the raw data.
 - `CSI_RM_OUTPUT=1`       # if numeric writes to that file descriptor, else writes to that file name.
-- `CSI_RM_TEMPLATE`       # a template that defines how the output is grouped (tbd)
+- `CSI_RM_TEMPLATE`       # a template that defines how the output is grouped
 - `CSI_RM_MICROSECONDS`   # report times in microseconds instead of milliseconds. (json reporter
 always reports raw data, i.e., microseconds.)
+
+## using a template
+
+A template is a JavaScript file that is used to group routes into buckets. For
+example, a route may have optional parameters or query params that would make
+them appear, by default, as separate routes.
+
+See example/template.js for a simple template with explanatory comments.
 
 ## design philosophy
 

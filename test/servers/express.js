@@ -110,7 +110,7 @@ app.get('/info', function(req, res, next) {
 });
 
 app.get('/random-wait', function(req, res, next) {
-  const ms = Math.floor(Math.random() * 1000);
+  const ms = Math.floor(Math.random() * 100);
   setTimeout(() => {
     res.send({waited: ms});
   }, ms);

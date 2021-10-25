@@ -38,7 +38,7 @@
     "valid-typeof": 2,
     "no-var": 2,
     "object-curly-spacing": [2, "never"],
-    "semi": 2,
+    "semi": ["warn", "always", {"omitLastInOneLineBlock": true}],
 
     // Best Practices
     // http://eslint.org/docs/rules/#best-practices

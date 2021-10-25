@@ -10,6 +10,8 @@ module.exports = {
   },
   routes: [
     {name: 'noecho (ALL PARAMS)', method: 'POST', regex: /^\/noecho(\?.+)?/},
+    {name: 'startsWith', method: 'POST', startsWith: '/me'},
+    {name: 'meta (ALL)', method: 'POST', startsWith: '/meta'},
     {name: 'GET /', method: 'GET', pattern: '/'},
     {name: '/wait/:time', method: 'GET', regex: /^\/wait\/.+/},
     {name: '/wait/10', method: 'GET', regex: /^\/wait\/10/},

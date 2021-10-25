@@ -1,21 +1,27 @@
 {
   "name": "@contrast/route-metrics",
-  "version": "1.0.0-alpha",
+  "version": "1.0.0",
   "description": "",
   "main": "lib/index.js",
   "bin": {
     "log-processor": "./lib/log-processor/index.js"
   },
   "files": [
-    "lib/**"
+    "lib/**",
+    "example/template.js"
   ],
   "scripts": {
     "test": "mocha 'test/**/*.test.js'",
     "test:cov": "nyc mocha $(find test -name '*.test.js')",
     "log-processor": "node ./lib/log-processor/index.js"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "metrics", "performance", "measurement", "web", "server"
+  ],
+  "author": "Contrast Security, Inc.",
+  "contributors": [
+    "Bruce A. MacNaughton <bmacnaughton@gmail.com>"
+  ],
   "license": "MIT",
   "dependencies": {
     "shimmer": "^1.2.1"
