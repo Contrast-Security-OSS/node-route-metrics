@@ -11,12 +11,17 @@
     "example/template.js"
   ],
   "scripts": {
+    "preinstall": "cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
     "test": "mocha 'test/**/*.test.js'",
     "test:cov": "nyc mocha $(find test -name '*.test.js')",
     "log-processor": "node ./lib/log-processor/index.js"
   },
   "keywords": [
-    "metrics", "performance", "measurement", "web", "server"
+    "metrics",
+    "performance",
+    "measurement",
+    "web",
+    "server"
   ],
   "author": "Contrast Security, Inc.",
   "contributors": [
