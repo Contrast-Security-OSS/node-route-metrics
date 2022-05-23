@@ -20,7 +20,7 @@ const files = [
   {name: `${dataDir}/item-counts.json`, lines: 1, chars: 64, newlineEnd: false},
   {name: `${dataDir}/empty.txt`, lines: 0, chars: 0, newlineEnd: false},
   {name: `${dataDir}/many-keys.json`, lines: 1, chars: 10023, newlineEnd: true},
-  {name: `${dataDir}/frozen-reader-test.js`, lines: 101, chars: 3034, newlineEnd: true},
+  {name: `${dataDir}/frozen-reader-test.js`, lines: 101, chars: 3032, newlineEnd: true},
   {name: `${dataDir}/WARNING-README`, lines: 6, chars: 200, newlineEnd: true},
 ];
 
