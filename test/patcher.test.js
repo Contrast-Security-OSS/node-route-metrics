@@ -1,5 +1,6 @@
 'use strict';
 
+const semver = require('semver');
 const {expect} = require('chai');
 const Require = module.constructor.prototype.require;
 
@@ -78,7 +79,11 @@ describe('patcher', function() {
     const eListener = event => {
       expect(event.name).equal(target);
       expect(event.error).instanceof(TypeError);
-      expect(event.error.message).equal('Cannot read property \'hello\' of undefined');
+      let message = 'Cannot read property \'hello\' of undefined';
+      if (semver.gte(process.version, '16.0.0')) {
+        message = 'Cannot read properties of undefined (reading \'hello\')';
+      }
+      expect(event.error.message).equal(message);
     };
     emitter.on('patch', pListener);
     emitter.on('error', eListener);
