@@ -31,7 +31,7 @@ describe('reader', function() {
       }
     }
 
-    expect(test()).eventually.rejectedWith('EACCES');
+    expect(test).eventually.rejectedWith('EACCES');
   });
 
   it('throws when trying to read a non-existent file', async function() {
