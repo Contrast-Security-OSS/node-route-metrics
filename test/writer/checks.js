@@ -83,7 +83,13 @@ function checkHeader(header, pdj, overrides) {
     });
   }
 
-  expected.config = {LOG_FILE: 'route-metrics.log', OUTPUT_CONFIG: null};
+  expected.config = {
+    LOG_FILE: 'route-metrics.log',
+    OUTPUT_CONFIG: null,
+    EVENTLOOP: false,
+    EVENTLOOP_RESOLUTION: 20,
+    GARBAGE_COLLECTION: false,
+  };
 
   // always set this as a test might change it.
   expected.argv = process.argv;

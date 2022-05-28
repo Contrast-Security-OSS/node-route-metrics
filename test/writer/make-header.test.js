@@ -7,7 +7,13 @@ const {checks} = require('./checks');
 const makeHeader = require('../../lib/writer/make-header');
 const pdj = require('../../package.json');
 const serversPdj = require('../servers/package.json');
-const config = {LOG_FILE: 'route-metrics.log', OUTPUT_CONFIG: null};
+const config = {
+  LOG_FILE: 'route-metrics.log',
+  OUTPUT_CONFIG: null,
+  EVENTLOOP: false,
+  EVENTLOOP_RESOLUTION: 20,
+  GARBAGE_COLLECTION: false,
+};
 
 // on windows, mocha's bin is under the mocha directory, not node_modules. as
 // a result the resolution logic will find mocha's package.json, not the one

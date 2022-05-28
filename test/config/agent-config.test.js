@@ -6,7 +6,10 @@ const getConfig = require('../../lib/config/agent-config').get;
 const prefix = 'CSI_RM_';
 const defaultConfig = {
   LOG_FILE: 'route-metrics.log',
-  OUTPUT_CONFIG: null
+  OUTPUT_CONFIG: null,
+  EVENTLOOP: false,
+  EVENTLOOP_RESOLUTION: 20,
+  GARBAGE_COLLECTION: false,
 };
 
 const catMattLog = 'cat-matt.log';
@@ -31,7 +34,8 @@ describe('get-config tests', function() {
     process.env[`${prefix}LOG_FILE`] = catMattLog;
     process.env[`${prefix}OUTPUT_CONFIG`] = shusiaJs;
     const {config, errors} = getConfig();
-    expect(config).eql({LOG_FILE: catMattLog, OUTPUT_CONFIG: shusiaJs});
+    const expected = Object.assign({}, defaultConfig, config);
+    expect(config).eql(expected);
     checkErrors(errors);
   });
 
@@ -40,7 +44,8 @@ describe('get-config tests', function() {
     process.env[`${prefix}OUTPUT_CONFIG`] = shusiaJs;
     process.env[`${prefix}MY_CAT`] = 'yinyin';
     const {config, errors} = getConfig();
-    expect(config).eql({LOG_FILE: catMattLog, OUTPUT_CONFIG: shusiaJs});
+    const expected = Object.assign({}, defaultConfig, config);
+    expect(config).eql(expected);
     checkErrors(errors, {unknown: [`${prefix}MY_CAT`]});
   });
 
