@@ -85,17 +85,21 @@ function makeTestGenerator(opts) {
         // also loads http. finally, both the simple server and express will load http and/or
         // https depending on what protocols are being loaded.
         let httpPatchEntryAdded = false;
+        let httpsPatchEntryAdded = false;
         if (t.agentPresent || expressPresent) {
           t.logEntries.push(patchHttp);
           httpPatchEntryAdded = true;
         }
+        // as of v4.?.? the agent requires axios which requires https.
         if (t.agentPresent) {
           t.logEntries.push(patchContrast);
+          t.logEntries.push(patchHttps);
+          httpsPatchEntryAdded = true;
         }
         t.loadProtos.forEach(lp => {
           if (lp === 'http' && !httpPatchEntryAdded) {
             t.logEntries.push(patchHttp);
-          } else if (lp === 'https') {
+          } else if (lp === 'https' && !httpsPatchEntryAdded) {
             t.logEntries.push(patchHttps);
           }
         });
@@ -152,7 +156,7 @@ if (!module.parent) {
     // eslint-disable-next-line no-console
     console.log(c.reduce((consol, single) => Object.assign(consol, single), {}));
   }
-  function getEnv() {return [{bruce: 'wenxin'}];}
+  function getEnv() {return [{bruce: 'wenxin'}]}
   function getBaseLogEntries() {
     return [[
       {some: 'kind', of: 'entry'},

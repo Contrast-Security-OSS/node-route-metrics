@@ -15,7 +15,6 @@ const pdj = require('./servers/package.json');
 function getBaseLogEntries() {
   return [[
     makeLogEntry('header', pdj),
-    makeLogEntry('unknown-config-items'),
   ]];
 }
 
@@ -43,6 +42,7 @@ describe('server log tests', function() {
 
     describe(desc, function() {
       this.timeout(10000);
+      let lastArgs;
       //
       // start the server
       //
@@ -52,6 +52,7 @@ describe('server log tests', function() {
           .then(() => {
             const absoluteServerPath = path.resolve(`./test/servers/${server}`);
             const nodeargs = [...nodeArgs, absoluteServerPath, ...appArgs];
+            lastArgs = nodeargs;
             testServer = new Server(nodeargs);
             // make argv match what the server will see.
             process.argv = [process.argv[0], absoluteServerPath, ...appArgs];
@@ -78,6 +79,14 @@ describe('server log tests', function() {
               expect(signal).equal(code);
             }
           });
+      });
+
+      afterEach(function() {
+        // if a test failed make it easier to debug how the server was created
+        if (this.currentTest.state === 'failed') {
+          // eslint-disable-next-line no-console
+          console.log('new Server(', lastArgs, ')');
+        }
       });
 
       //

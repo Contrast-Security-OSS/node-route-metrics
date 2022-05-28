@@ -47,7 +47,7 @@ echo.post('/meta', function(req, res, next) {
     tracker: !!tracker,
   };
   if (tracker) {
-    response.tracked = tracker.getData(s).tracked;
+    response.tracked = !!tracker.getData(s);
   }
   res.send(response);
 });
