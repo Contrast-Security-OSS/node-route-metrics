@@ -15,7 +15,7 @@
       "program": "${workspaceFolder}/test/servers/simple.js"
     },
     {
-      "name": "simple[agent]",
+      "name": "server[agent]",
       "type": "pwa-node",
       "request": "launch",
       "skipFiles": [
@@ -25,7 +25,8 @@
         "-r", "${workspaceFolder}",
         "-r", "@contrast/agent"
       ],
-      "program": "${workspaceFolder}/test/servers/simple.js"
+      "args": ["${input:args}"],
+      "program": "${workspaceFolder}/test/servers/${input:server}"
     },
     {
       "name": "current file",
@@ -67,5 +68,18 @@
       },
       "program": "${relativeFile}"
     },
-  ]
+  ],
+  "inputs": [{
+    "id": "args",
+    "type": "promptString",
+    "description": "enter args"
+  }, {
+    "id": "server",
+    "type": "pickString",
+    "description": "server to run",
+    "options": [
+      "simple",
+      "express"
+    ]
+  }]
 }
