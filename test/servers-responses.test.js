@@ -23,6 +23,7 @@ describe('server response tests', function() {
 
     describe(t.desc, function() {
       let testServer;
+      let lastArgs;
       this.timeout(10000);
       //
       // start the server
@@ -31,6 +32,7 @@ describe('server response tests', function() {
         process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
         const options = {env: Object.assign({}, process.env, t.env)};
         const nodeargs = [...t.nodeArgs, `./test/servers/${server}`, ...appArgs];
+        lastArgs = nodeargs;
         testServer = new Server(nodeargs, options);
         return testServer.readyPromise;
       });
@@ -41,6 +43,14 @@ describe('server response tests', function() {
         }
         // if it didn't exit on its own, kill it.
         return testServer.stop({type: 'signal', value: 'SIGKILL'});
+      });
+
+      afterEach(function() {
+        // if a test failed make it easier to debug how the server was created
+        if (this.currentTest.state === 'failed') {
+          // eslint-disable-next-line no-console
+          console.log('new Server(', lastArgs, ')');
+        }
       });
 
       //

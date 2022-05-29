@@ -58,7 +58,7 @@ function dispatch(req, res, body) {
         tracker: !!tracker,
       };
       if (tracker) {
-        response.tracked = tracker.getData(s).tracked;
+        response.tracked = !!tracker.getData(s);
       }
       res.end(JSON.stringify(response));
       return;

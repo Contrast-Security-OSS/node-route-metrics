@@ -27,17 +27,25 @@ class Server {
         const s = d.toString();
         // wait to see the pid output. by test convention that's when
         // the callback of server.listen() has been called.
-        if (/^\d+/.test(s) && s[s.length - 1] === '\n') {
+        if (/^\d+\n$/.test(s)) {
           this.havePid = true;
           resolve();
         } else {
+          if (Server.isAgentStartupNoise(s)) {
+            return;
+          }
           reject(new Error(`unexpected output ${s.slice(0, -1)}`));
         }
       });
       this.cp.stderr.on('data', function(d) {
+        const s = d.toString();
+        // let's not see this over and over
+        if (s.includes('Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to \'0\'')) {
+          return;
+        }
         // this helps debug if the servers have an error.
         // eslint-disable-next-line no-console
-        console.log('stderr:', d.toString());
+        console.log('stderr:', s);
       });
     });
   }
@@ -86,6 +94,24 @@ class Server {
         }
       };
     });
+  }
+
+  static isAgentStartupNoise(s) {
+    if (s.length === 1 && s === '\n') {
+      // ignore blank lines
+      return true;
+    }
+    if (/^@contrast\/agent \d+\.\d+\.\d+\n/.test(s)) {
+      return true;
+    }
+    if (/--------------------------------------/.test(s)) {
+      return true;
+    }
+    if (s.startsWith('The Contrast Node Agent collects usage data')) {
+      return true;
+    }
+
+    return false;
   }
 
 }
