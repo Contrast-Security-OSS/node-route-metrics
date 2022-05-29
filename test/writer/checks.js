@@ -4,24 +4,74 @@ const fsp = require('fs').promises;
 const os = require('os');
 const {expect} = require('chai');
 
-async function waitForLinesAndCheck(expected, needed = expected.length) {
+async function waitForLinesAndCheck(expected, options = {}) {
+  const needed = ('needed' in options) ? options.needed : expected.length;
+  const {lines: rawLines} = await waitForLines(needed, options);
+  const lines = rawLines.map(JSON.parse);
+  expect(lines).exist;
+  expect(lines.length).gte(needed, 'not enough lines');
+  for (let i = 0; i < expected.length; i++) {
+    const {validator} = expected[i];
+    expect(lines).property(i).exist;
+    expect(lines[i]).property('type').equal(expected[i].type);
+    validator(lines[i].entry);
+  }
+}
+
+async function waitForLines(needed, options = {}) {
+  let linesNeeded = 0;
+  if (typeof needed === 'number') {
+    linesNeeded = needed;
+    needed = {};
+  }
+  const totalWaitTime = ('totalWaitTime' in options) ? options.totalWaitTime : 100;
+  const loopWaitTime = ('loopWaitTime' in options) ? options.loopWaitTime : 10;
+  const maxTries = Math.ceil(totalWaitTime / loopWaitTime);
+  const start = Date.now();
+
   let lines;
-  for (let tries = 10; tries > 0; tries--) {
-    const text = await fsp.readFile('route-metrics.log', {encoding: 'utf8'});
+  let text;
+  for (let tries = 0; tries < maxTries; tries++) {
+    text = await fsp.readFile('route-metrics.log', {encoding: 'utf8'});
     lines = text.split('\n').slice(0, -1);
-    if (lines.length >= needed) {
-      // check results against expected
-      lines = lines.map(JSON.parse);
-      for (let i = 0; i < expected.length; i++) {
-        const {validator} = expected[i];
-        expect(lines).property(i).exist;
-        expect(lines[i]).property('type').equal(expected[i].type);
-        validator(lines[i].entry);
-      }
+    const logObjects = lines.map(l => JSON.parse(l));
+    if (lines.length >= linesNeeded && allRequestedLines(logObjects, needed)) {
+      break;
     } else {
-      await wait(10);
+      await wait(loopWaitTime);
     }
   }
+  return {text, lines, waitTime: Date.now() - start};
+}
+
+function allRequestedLines(logObjects, needed) {
+  const defaultsNeeded = {
+    header: 1,
+    patch: 0,
+    gc: 0,
+    eventloop: 0,
+    metric: 0,
+  };
+  const needCounts = Object.assign({}, defaultsNeeded, needed);
+  for (const key in needCounts) {
+    if (needCounts[key] === 0) {
+      delete needCounts[key];
+    }
+  }
+
+  for (const line of logObjects) {
+    if (line.type in needCounts) {
+      needCounts[line.type] -= 1;
+      if (needCounts[line.type] === 0) {
+        delete needCounts[line.type];
+        if (Object.keys(needCounts).length === 0) {
+          return true;
+        }
+      }
+    }
+  }
+
+  return false;
 }
 
 function wait(ms) {
@@ -85,24 +135,37 @@ function checkHeader(header, pdj, overrides) {
 
   expected.config = {
     LOG_FILE: 'route-metrics.log',
-    OUTPUT_CONFIG: null,
+    OUTPUT_CONFIG: '',
     EVENTLOOP: false,
     EVENTLOOP_RESOLUTION: 20,
     GARBAGE_COLLECTION: false,
   };
 
-  // always set this as a test might change it.
+  // always set this because a test might change it.
   expected.argv = process.argv;
 
   if (overrides) {
-    Object.assign(expected, overrides);
+    if (typeof overrides === 'function') {
+      overrides = overrides();
+    }
+
+    for (const [key, obj] of Object.entries(overrides)) {
+      if (!(key in expected)) {
+        throw new Error(`override specifies invalid key ${key}`);
+      }
+      if (typeof expected[key] === 'object') {
+        Object.assign(expected[key], obj);
+      } else {
+        expected[key] = obj;
+      }
+    }
   }
 
   expect(header).eql(expected);
 }
 
-function checkPatch(patch, name, overrides) {
-  expect(patch).property('name').equal(name);
+function checkPatch(entry, name, overrides) {
+  expect(entry).property('name').equal(name);
 }
 
 const metricsKeys = {
@@ -115,14 +178,30 @@ const metricsKeys = {
   statusCode: {type: 'number'},
 };
 
-function checkMetrics(metrics, overrides) {
+function checkMetrics(entry, overrides) {
   for (const key in metricsKeys) {
     if (Array.isArray(metricsKeys[key])) {
-      expect(metrics).property(key).oneOf(metricsKeys[key]);
+      expect(entry).property(key).oneOf(metricsKeys[key]);
     } else {
-      expect(metrics).property(key).a(metricsKeys[key].type);
+      expect(entry).property(key).a(metricsKeys[key].type);
     }
   }
+}
+
+function checkGarbageCollection(entry, overrides) {
+  expect(entry).property('count').a('number');
+  expect(entry).property('totalTime').a('number');
+}
+
+function checkEventloop(entry, overrides) {
+  if (typeof overrides === 'function') {
+    overrides = overrides();
+  }
+  // overrides?
+  for (const percentile of [50, 75, 90, 97.5, 99]) {
+    expect(entry[percentile]).a('number');
+  }
+
 }
 
 function checkUnknownConfigItems(option) {
@@ -130,10 +209,13 @@ function checkUnknownConfigItems(option) {
 }
 
 const checks = {
+  waitForLines,
   waitForLinesAndCheck,
   header: checkHeader,
   patch: checkPatch,
   metrics: checkMetrics,
+  gc: checkGarbageCollection,
+  eventloop: checkEventloop,
   'unknown-config-items': checkUnknownConfigItems,
 };
 
@@ -141,4 +223,12 @@ function makeLogEntry(type, ...args) {
   return {type, validator: (entry) => checks[type](entry, ...args)};
 }
 
-module.exports = {checks, makeLogEntry};
+function makeMetricsLogEntry(method, pathEnd) {
+  return {method, pathEnd, validator: (entry) => {
+    expect(entry.method).equal(method);
+    expect(entry.url.endsWith(pathEnd)).equal(true, `expected url to end with ${pathEnd}`);
+    checks.metrics(entry);
+  }};
+}
+
+module.exports = {checks, makeLogEntry, makeMetricsLogEntry};

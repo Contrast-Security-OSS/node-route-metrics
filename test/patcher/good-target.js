@@ -1,5 +1,5 @@
 'use strict';
 
 module.exports = {
-  bruce: function() {return 'wenxin';}
+  bruce: function() {return 'wenxin'}
 };

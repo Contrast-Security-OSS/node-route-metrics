@@ -9,7 +9,7 @@ const pdj = require('../../package.json');
 const serversPdj = require('../servers/package.json');
 const config = {
   LOG_FILE: 'route-metrics.log',
-  OUTPUT_CONFIG: null,
+  OUTPUT_CONFIG: '',
   EVENTLOOP: false,
   EVENTLOOP_RESOLUTION: 20,
   GARBAGE_COLLECTION: false,

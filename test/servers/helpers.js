@@ -1,10 +1,16 @@
 'use strict';
 
+const util = require('util');
+
 const {makeLogEntry} = require('../writer/checks');
+
+const defaultEnv = {
+  CONTRAST_DEV: true
+};
 
 const defaultOptions = {
   getBaseLogEntries: () => [],
-  getEnv: () => [{CONTRAST_DEV: true}],
+  getEnv: (env) => [env],
   routeMetrics: './lib/index.js',
   useEmptyNodeArgs: false,
   addPatchLogEntries: true,
@@ -15,6 +21,12 @@ const patchHttp = makeLogEntry('patch', 'http');
 const patchHttps = makeLogEntry('patch', 'https');
 const patchContrast = makeLogEntry('patch', '@contrast/agent');
 
+//
+// makeTestGenerator() returns a generator function that returns tests
+// for all combinations of server (simple, express), protocols (server:
+// [http, https, both] for client: [http, https]), instrumentation (none,
+// route-metrics, route-metrics + node-agent).
+//
 function makeTestGenerator(opts) {
   const options = Object.assign({}, defaultOptions, opts);
   const {getBaseLogEntries, getEnv, routeMetrics, basePort} = options;
@@ -37,16 +49,15 @@ function makeTestGenerator(opts) {
 
   const logEntries = {logEntries: getBaseLogEntries()};
 
-  const env = {env: getEnv()};
+  const env = {env: getEnv(defaultEnv)};
 
   if (!options.useEmptyNodeArgs) {
     nodeArgs.nodeArgs.shift();
   }
 
-  // get the combinations
   const combos = combinations(server, protocolPair, nodeArgs, logEntries, env);
 
-  // return a generator that merges the result objects for each combination
+  // return the generator that merges the result objects for each combination
   return function*() {
     for (let t of combos) {
       t = t.reduce((consol, single) => Object.assign(consol, single), {});
@@ -55,6 +66,10 @@ function makeTestGenerator(opts) {
       t.loadProtos = t.protocolPair.load;
       t.nodeArgsDesc = t.nodeArgs.desc;
       t.desc = `${t.server} with ${t.nodeArgs.desc} via ${t.protocol} (${t.loadProtos.join(', ')})`;
+      const nonDefaultEnv = removeDefaultEnv(t.env);
+      if (Object.keys(nonDefaultEnv).length >= 1) {
+        t.desc = `${t.desc} (${util.format(nonDefaultEnv)})`;
+      }
       t.nodeArgs = t.nodeArgs.args;
 
       // make the arguments for the server app and define the base url to access
@@ -70,43 +85,82 @@ function makeTestGenerator(opts) {
         throw new Error(`loadProtos ${t.loadProtos.join(', ')} doesn't contain ${t.protocol}`);
       }
 
-      if (t.logEntries) {
-        t.logEntries = t.logEntries.slice();
-      }
       t.agentPresent = t.nodeArgs[t.nodeArgs.length - 1] === '@contrast/agent';
 
-      if (options.addPatchLogEntries && t.logEntries) {
-        // kind of funky tests but good enough. both the agent and express
-        // require http.
-        const expressPresent = t.server === 'express';
-
-        // this code is specific to each combination - if the contrast agent is loaded then
-        // http will be loaded before the agent completes loading. if express is loaded it
-        // also loads http. finally, both the simple server and express will load http and/or
-        // https depending on what protocols are being loaded.
-        let httpPatchEntryAdded = false;
-        let httpsPatchEntryAdded = false;
-        if (t.agentPresent || expressPresent) {
-          t.logEntries.push(patchHttp);
-          httpPatchEntryAdded = true;
-        }
-        // as of v4.?.? the agent requires axios which requires https.
-        if (t.agentPresent) {
-          t.logEntries.push(patchContrast);
-          t.logEntries.push(patchHttps);
-          httpsPatchEntryAdded = true;
-        }
-        t.loadProtos.forEach(lp => {
-          if (lp === 'http' && !httpPatchEntryAdded) {
-            t.logEntries.push(patchHttp);
-          } else if (lp === 'https' && !httpsPatchEntryAdded) {
-            t.logEntries.push(patchHttps);
-          }
-        });
+      if (t.logEntries && options.addPatchLogEntries) {
+        // don't change the generated logEntries array
+        t.logEntries = t.logEntries.slice();
+        addPatchEntries(t, t.logEntries);
       }
+
       yield t;
     }
   };
+}
+
+function removeDefaultEnv(env) {
+  const e = Object.assign({}, env);
+  for (const key in defaultEnv) {
+    if (env[key] === defaultEnv[key]) {
+      delete e[key];
+    }
+  }
+  return e;
+}
+
+//
+// addPatchEntries() was part of the test generator but that didn't allow
+// modifying the header check for different env var configurations. so now
+// it's separate and tests that modify env vars need to manually construct
+// their own expected log entries.
+//
+function addPatchEntries(t, logEntries) {
+  // kind of funky tests but good enough. both the agent and express
+  // require http.
+  const expressPresent = t.server === 'express';
+
+  // this code is specific to each combination - if the contrast agent is loaded then
+  // http will be loaded before the agent completes loading. if express is loaded it
+  // also loads http. finally, both the simple server and express will load http and/or
+  // https depending on what protocols are being loaded.
+  let httpPatchEntryAdded = false;
+  let httpsPatchEntryAdded = false;
+  if (t.agentPresent || expressPresent) {
+    logEntries.push(patchHttp);
+    httpPatchEntryAdded = true;
+  }
+  // as of v4.?.? the agent requires axios which requires https, so first there is
+  // a patch entry for the contrast node-agent then one for https when axios requires
+  // it.
+  if (t.agentPresent) {
+    logEntries.push(patchContrast);
+    logEntries.push(patchHttps);
+    httpsPatchEntryAdded = true;
+  }
+  t.loadProtos.forEach(lp => {
+    if (lp === 'http' && !httpPatchEntryAdded) {
+      logEntries.push(patchHttp);
+    } else if (lp === 'https' && !httpsPatchEntryAdded) {
+      logEntries.push(patchHttps);
+    }
+  });
+
+  return logEntries;
+}
+
+function addTimeSeriesEntries(t, logEntries) {
+  let gc = 0;
+  if (t.env.CSI_RM_GARBAGE_COLLECTION) {
+    logEntries.push(makeLogEntry('gc'));
+    gc = 1;
+  }
+  let eventloop = 0;
+  if (t.env.CSI_RM_EVENTLOOP) {
+    logEntries.push(makeLogEntry('eventloop'));
+    eventloop = 1;
+  }
+
+  return {gc, eventloop};
 }
 
 //
@@ -143,7 +197,9 @@ function* combinations(head, ...tail) {
 
 module.exports = {
   makeTestGenerator,
-  combinations
+  combinations,
+  addPatchEntries,
+  addTimeSeriesEntries,
 };
 
 //

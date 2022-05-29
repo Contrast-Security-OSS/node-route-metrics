@@ -6,7 +6,7 @@ const getConfig = require('../../lib/config/agent-config').get;
 const prefix = 'CSI_RM_';
 const defaultConfig = {
   LOG_FILE: 'route-metrics.log',
-  OUTPUT_CONFIG: null,
+  OUTPUT_CONFIG: '',
   EVENTLOOP: false,
   EVENTLOOP_RESOLUTION: 20,
   GARBAGE_COLLECTION: false,
@@ -33,18 +33,40 @@ describe('get-config tests', function() {
   it('allow setting valid options', function() {
     process.env[`${prefix}LOG_FILE`] = catMattLog;
     process.env[`${prefix}OUTPUT_CONFIG`] = shusiaJs;
+    process.env[`${prefix}EVENTLOOP`] = true;
+    process.env[`${prefix}GARBAGE_COLLECTION`] = true;
+    const modified = {
+      LOG_FILE: catMattLog,
+      OUTPUT_CONFIG: shusiaJs,
+      EVENTLOOP: true,
+      GARBAGE_COLLECTION: true,
+    };
     const {config, errors} = getConfig();
-    const expected = Object.assign({}, defaultConfig, config);
+    const expected = Object.assign({}, defaultConfig, modified);
+    expect(config).eql(expected);
+    checkErrors(errors);
+  });
+
+  it('converts boolean options to boolean', function() {
+    process.env[`${prefix}EVENTLOOP`] = true;
+    process.env[`${prefix}GARBAGE_COLLECTION`] = true;
+    const modified = {
+      EVENTLOOP: true,
+      GARBAGE_COLLECTION: true,
+    };
+    const {config, errors} = getConfig();
+    const expected = Object.assign({}, defaultConfig, modified);
     expect(config).eql(expected);
     checkErrors(errors);
   });
 
   it('report unknown options when good options are present', function() {
-    process.env[`${prefix}LOG_FILE`] = 'cat-matt.log';
+    process.env[`${prefix}LOG_FILE`] = catMattLog;
     process.env[`${prefix}OUTPUT_CONFIG`] = shusiaJs;
     process.env[`${prefix}MY_CAT`] = 'yinyin';
+    const modified = {LOG_FILE: catMattLog, OUTPUT_CONFIG: shusiaJs};
     const {config, errors} = getConfig();
-    const expected = Object.assign({}, defaultConfig, config);
+    const expected = Object.assign({}, defaultConfig, modified);
     expect(config).eql(expected);
     checkErrors(errors, {unknown: [`${prefix}MY_CAT`]});
   });
