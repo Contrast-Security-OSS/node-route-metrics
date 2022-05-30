@@ -68,6 +68,12 @@ All route-metrics agent configuration is done via environment variables. The env
 are shown with their default values.
 
 - `CSI_RM_LOG_FILE=route-metrics.log`
+- `CSI_RM_GARBAGE_COLLECTION=false`
+- `CSI_RM_EVENTLOOP=false`
+- `CSI_RM_EVENTLOOP_RESOLUTION=20`
+
+Boolean options must be set to `true` to enable. The eventloop resolution is how often it is
+sampled internally by node; the setting is in milliseconds.
 
 The `route-metrics` log processor is also configured via environment variables.
 
