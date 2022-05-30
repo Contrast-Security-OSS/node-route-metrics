@@ -14,11 +14,11 @@ const path = require('path');
 const fetch = require('node-fetch');
 const {expect} = require('chai');
 
-const Server = require('./servers/server');
-const {makeTestGenerator, addPatchEntries, addTimeSeriesEntries} = require('./servers/helpers');
-const {checks, makeLogEntry, makeMetricsLogEntry} = require('./writer/checks');
+const Server = require('../test/servers/server');
+const {makeTestGenerator, addPatchEntries, addTimeSeriesEntries} = require('../test/servers/helpers');
+const {checks, makeLogEntry, makeMetricsLogEntry} = require('../test/servers/checks');
 
-const pdj = require('./servers/package.json');
+const pdj = require('../test/servers/package.json');
 
 // get helpful output when true and tests fail
 const debugging = false;

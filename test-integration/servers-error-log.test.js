@@ -6,11 +6,11 @@ const path = require('path');
 
 const {expect} = require('chai');
 
-const Server = require('./servers/server');
-const {makeTestGenerator} = require('./servers/helpers');
-const {checks, makeLogEntry} = require('./writer/checks');
+const Server = require('../test/servers/server');
+const {makeTestGenerator} = require('../test/servers/helpers');
+const {checks, makeLogEntry} = require('../test/servers/checks');
 
-const pdj = require('./servers/package.json');
+const pdj = require('../test/servers/package.json');
 // start the test definitions
 // these are the log entries that are always present.
 function getBaseLogEntries() {

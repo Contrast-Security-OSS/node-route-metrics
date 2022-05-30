@@ -2,7 +2,7 @@
 
 const util = require('util');
 
-const {makeLogEntry} = require('../writer/checks');
+const {makeLogEntry} = require('./checks');
 
 const defaultEnv = {
   CONTRAST_DEV: true
