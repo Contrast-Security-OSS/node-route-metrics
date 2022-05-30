@@ -7,8 +7,8 @@ const path = require('path');
 const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
-const {makeTestGenerator} = require('../test/servers/helpers');
-const {checks, makeLogEntry} = require('../test/servers/checks');
+const {makeTestGenerator} = require('../test/helpers');
+const {checks, makeLogEntry} = require('../test/checks');
 
 const pdj = require('../test/servers/package.json');
 // start the test definitions

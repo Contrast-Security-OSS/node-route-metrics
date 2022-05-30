@@ -7,8 +7,8 @@ const fetch = require('node-fetch');
 const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
-const {makeTestGenerator} = require('../test/servers/helpers');
-const {checks, makeLogEntry} = require('../test/servers/checks');
+const {makeTestGenerator} = require('../test/helpers');
+const {checks, makeLogEntry} = require('../test/checks');
 
 const pdj = require('../test/servers/package.json');
 // these are the log entries that are always present.

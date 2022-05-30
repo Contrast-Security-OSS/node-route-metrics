@@ -18,6 +18,19 @@ async function waitForLinesAndCheck(expected, options = {}) {
   }
 }
 
+/**
+ * waitForLines() will wait for either a specific number of lines or for specified
+ * lines to appear in the log file. the original implementation was for a number
+ * lines but was problematic with the introduction of time-series entries (gc and
+ * eventloop). if an object is passed it contains a required count for each entry
+ * type (header, patch, eventloop, gc, metrics). passing an object allows the log
+ * entries to appear in any order; if the order needs to be checked, it is the
+ * caller's responsibility.
+ *
+ * @param {number|object} needed number of lines to wait for or an object as described
+ * @param {object} options finer control over the waiting process
+ * @return {object} {text: string, lines: string[], foundAll: boolean, waitTime: number}
+ */
 async function waitForLines(needed, options = {}) {
   let linesNeeded = 0;
   if (typeof needed === 'number') {
@@ -31,17 +44,19 @@ async function waitForLines(needed, options = {}) {
 
   let lines;
   let text;
+  let foundAll = false;
   for (let tries = 0; tries < maxTries; tries++) {
     text = await fsp.readFile('route-metrics.log', {encoding: 'utf8'});
     lines = text.split('\n').slice(0, -1);
     const logObjects = lines.map(l => JSON.parse(l));
     if (lines.length >= linesNeeded && allRequestedLines(logObjects, needed)) {
+      foundAll = true;
       break;
     } else {
       await wait(loopWaitTime);
     }
   }
-  return {text, lines, waitTime: Date.now() - start};
+  return {text, lines, foundAll, waitTime: Date.now() - start};
 }
 
 function allRequestedLines(logObjects, needed) {
@@ -198,7 +213,7 @@ function checkEventloop(entry, overrides) {
     overrides = overrides();
   }
   // overrides?
-  for (const percentile of [50, 75, 90, 97.5, 99]) {
+  for (const percentile of [50, 75, 90, 95, 99]) {
     expect(entry[percentile]).a('number');
   }
 
