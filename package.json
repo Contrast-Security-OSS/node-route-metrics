@@ -11,8 +11,9 @@
     "example/template.js"
   ],
   "scripts": {
-    "test": "mocha 'test/**/*.test.js'",
-    "test:cov": "nyc mocha $(find test -name '*.test.js')",
+    "test": "mocha --exclude 'node_modules/**/*' '**/*.test.js'",
+    "test:cov": "nyc npm run test",
+    "test:cov-old": "nyc mocha $(find test -name '*.test.js')",
     "log-processor": "node ./lib/log-processor/index.js"
   },
   "keywords": [
