@@ -174,7 +174,6 @@ describe('server time-series tests', function() {
         };
 
         const totalLinesNeeded = Object.keys(typesNeeded).reduce((ac, key) => ac + typesNeeded[key], 0);
-        //const totalLinesNeeded = expectedLogEntries.length + timeSeriesEntries.length + metricsEntries.length;
         const options = {totalWaitTime: 3500};
         const {lines: logLines} = await checks.waitForLines(typesNeeded, options);
 
