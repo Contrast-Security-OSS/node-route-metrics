@@ -98,7 +98,7 @@ describe('server log tests', function() {
       // the tests start here
       //
       it('header and patch entries are present after startup', async function() {
-        const subset = t.logEntries.filter(e => {
+        const subset = logEntries.filter(e => {
           return e.type === 'header' || e.type === 'patch';
         });
 

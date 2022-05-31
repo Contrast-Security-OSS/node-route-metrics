@@ -2,14 +2,11 @@
 
 const util = require('util');
 
-const {makePatchEntryCheckers} = require('./checks');
-
 const defaultEnv = {
   CONTRAST_DEV: true
 };
 
 const defaultOptions = {
-  getBaseLogEntries: () => [],
   getEnv: (env) => [env],
   routeMetrics: './lib/index.js',
   useEmptyNodeArgs: false,
@@ -26,7 +23,7 @@ const defaultOptions = {
 //
 function makeTestGenerator(opts) {
   const options = Object.assign({}, defaultOptions, opts);
-  const {getBaseLogEntries, getEnv, routeMetrics, basePort} = options;
+  const {getEnv, routeMetrics, basePort} = options;
 
   const server = {server: ['simple', 'express']};
 
@@ -44,15 +41,13 @@ function makeTestGenerator(opts) {
     {desc: 'route-metrics + agent', args: ['-r', routeMetrics, '-r', '@contrast/agent']},
   ]};
 
-  const logEntries = {logEntries: getBaseLogEntries()};
-
   const env = {env: getEnv(defaultEnv)};
 
   if (!options.useEmptyNodeArgs) {
     nodeArgs.nodeArgs.shift();
   }
 
-  const combos = combinations(server, protocolPair, nodeArgs, logEntries, env);
+  const combos = combinations(server, protocolPair, nodeArgs, env);
 
   // return the generator that merges the result objects for each combination
   return function*() {
@@ -83,12 +78,6 @@ function makeTestGenerator(opts) {
       }
 
       t.agentPresent = t.nodeArgs[t.nodeArgs.length - 1] === '@contrast/agent';
-
-      if (t.logEntries && options.addPatchLogEntries) {
-        // don't change the generated logEntries array
-        t.logEntries = t.logEntries.slice();
-        t.logEntries.push(...makePatchEntryCheckers(t));
-      }
 
       yield t;
     }
