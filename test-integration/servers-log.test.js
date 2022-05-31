@@ -8,22 +8,22 @@ const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
 const {makeTestGenerator} = require('../test/helpers');
-const {checks, makeLogEntry} = require('../test/checks');
+const {checks, makeLogEntryChecker} = require('../test/checks');
 
 const pdj = require('../test/servers/package.json');
 // these are the log entries that are always present.
 function getBaseLogEntries() {
   return [[
-    makeLogEntry('header', pdj),
+    makeLogEntryChecker('header', pdj),
   ]];
 }
 
 const tests = makeTestGenerator({getBaseLogEntries});
 
 const metricsEntries = [
-  makeLogEntry('metrics'),
-  makeLogEntry('metrics'),
-  makeLogEntry('metrics'),
+  makeLogEntryChecker('metrics'),
+  makeLogEntryChecker('metrics'),
+  makeLogEntryChecker('metrics'),
 ];
 
 // save these initial values

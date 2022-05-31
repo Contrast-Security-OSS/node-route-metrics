@@ -15,8 +15,14 @@ const fetch = require('node-fetch');
 const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
-const {makeTestGenerator, addPatchEntries, addTimeSeriesEntries} = require('../test/helpers');
-const {checks, makeLogEntry, makeMetricsLogEntry} = require('../test/checks');
+const {makeTestGenerator} = require('../test/helpers');
+const {
+  checks,
+  makeLogEntryChecker,
+  makeMetricsChecker,
+  makePatchEntryCheckers,
+  makeTimeSeriesCheckers,
+} = require('../test/checks');
 
 const pdj = require('../test/servers/package.json');
 
@@ -27,10 +33,11 @@ const debugging = false;
 //
 function getBaseLogEntries() {
   return [[
-    makeLogEntry('header', pdj),
+    makeLogEntryChecker('header', pdj),
   ]];
 }
 
+// returns an array of additional env var settings to make combinations with
 function getEnv(defaultEnv) {
   return [
     Object.assign({}, defaultEnv, {CSI_RM_GARBAGE_COLLECTION: true}),
@@ -74,8 +81,8 @@ describe('server time-series tests', function() {
         // take header overrides into account; the original implementation
         // still works but should be replaced by explicit construction of the
         // expected log entries.
-        expectedLogEntries.push(makeLogEntry('header', pdj, overrides));
-        addPatchEntries(t, expectedLogEntries);
+        expectedLogEntries.push(makeLogEntryChecker('header', pdj, overrides));
+        expectedLogEntries.push(...makePatchEntryCheckers(t));
 
         // don't wait so long
         process.env.CSI_ROUTE_METRICS_TIME_SERIES_INTERVAL = 100;
@@ -126,8 +133,7 @@ describe('server time-series tests', function() {
       // the tests start here
       //
       it('header, patch, and time-series entries are all correct', async function() {
-        const timeSeriesEntries = [];
-        addTimeSeriesEntries(t, timeSeriesEntries);
+        const {checkers: timeSeriesEntries} = makeTimeSeriesCheckers(t);
         const totalLinesNeeded = expectedLogEntries.length + timeSeriesEntries.length;
         const {lines: logLines} = await checks.waitForLines(totalLinesNeeded);
 
@@ -150,13 +156,12 @@ describe('server time-series tests', function() {
       });
 
       it('post and get entries are present with time-series entries', async function() {
-        const timeSeriesEntries = [];
-        const tsCounts = addTimeSeriesEntries(t, timeSeriesEntries);
+        const {checkers: timeSeriesEntries, gc, eventloop} = makeTimeSeriesCheckers(t);
 
         const metricsEntries = [
-          makeMetricsLogEntry('post', '/echo'),
-          makeMetricsLogEntry('post', '/meta'),
-          makeMetricsLogEntry('get', '/info'),
+          makeMetricsChecker('post', '/echo'),
+          makeMetricsChecker('post', '/meta'),
+          makeMetricsChecker('get', '/info'),
         ];
 
         // now execute some requests
@@ -169,20 +174,19 @@ describe('server time-series tests', function() {
           header: 1,
           patch: expectedLogEntries.length - 1,
           metrics: metricsEntries.length,
-          gc: tsCounts.gc,
-          eventloop: tsCounts.eventloop,
+          gc,
+          eventloop,
         };
 
-        const totalLinesNeeded = Object.keys(typesNeeded).reduce((ac, key) => ac + typesNeeded[key], 0);
         const options = {totalWaitTime: 3500};
-        const {lines: logLines} = await checks.waitForLines(typesNeeded, options);
+        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded, options);
 
-        if (debugging && logLines.length < totalLinesNeeded) {
+        if (debugging && logLines.length < linesNeeded) {
           // eslint-disable-next-line no-console
           console.log(logLines);
         }
 
-        expect(logLines.length).gte(totalLinesNeeded, 'not enough lines');
+        expect(logLines.length).gte(linesNeeded, 'not enough lines');
         const logObjects = logLines.map(line => JSON.parse(line));
 
         for (let i = 0; i < expectedLogEntries.length; i++) {

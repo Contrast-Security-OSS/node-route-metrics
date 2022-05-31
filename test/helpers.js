@@ -2,7 +2,7 @@
 
 const util = require('util');
 
-const {makeLogEntry} = require('./checks');
+const {makePatchEntryCheckers} = require('./checks');
 
 const defaultEnv = {
   CONTRAST_DEV: true
@@ -17,9 +17,6 @@ const defaultOptions = {
   basePort: 8888,
 };
 
-const patchHttp = makeLogEntry('patch', 'http');
-const patchHttps = makeLogEntry('patch', 'https');
-const patchContrast = makeLogEntry('patch', '@contrast/agent');
 
 //
 // makeTestGenerator() returns a generator function that returns tests
@@ -90,7 +87,7 @@ function makeTestGenerator(opts) {
       if (t.logEntries && options.addPatchLogEntries) {
         // don't change the generated logEntries array
         t.logEntries = t.logEntries.slice();
-        addPatchEntries(t, t.logEntries);
+        t.logEntries.push(...makePatchEntryCheckers(t));
       }
 
       yield t;
@@ -106,61 +103,6 @@ function removeDefaultEnv(env) {
     }
   }
   return e;
-}
-
-//
-// addPatchEntries() was part of the test generator but that didn't allow
-// modifying the header check for different env var configurations. so now
-// it's separate and tests that modify env vars need to manually construct
-// their own expected log entries.
-//
-function addPatchEntries(t, logEntries) {
-  // kind of funky tests but good enough. both the agent and express
-  // require http.
-  const expressPresent = t.server === 'express';
-
-  // this code is specific to each combination - if the contrast agent is loaded then
-  // http will be loaded before the agent completes loading. if express is loaded it
-  // also loads http. finally, both the simple server and express will load http and/or
-  // https depending on what protocols are being loaded.
-  let httpPatchEntryAdded = false;
-  let httpsPatchEntryAdded = false;
-  if (t.agentPresent || expressPresent) {
-    logEntries.push(patchHttp);
-    httpPatchEntryAdded = true;
-  }
-  // as of v4.?.? the agent requires axios which requires https, so first there is
-  // a patch entry for the contrast node-agent then one for https when axios requires
-  // it.
-  if (t.agentPresent) {
-    logEntries.push(patchContrast);
-    logEntries.push(patchHttps);
-    httpsPatchEntryAdded = true;
-  }
-  t.loadProtos.forEach(lp => {
-    if (lp === 'http' && !httpPatchEntryAdded) {
-      logEntries.push(patchHttp);
-    } else if (lp === 'https' && !httpsPatchEntryAdded) {
-      logEntries.push(patchHttps);
-    }
-  });
-
-  return logEntries;
-}
-
-function addTimeSeriesEntries(t, logEntries) {
-  let gc = 0;
-  if (t.env.CSI_RM_GARBAGE_COLLECTION) {
-    logEntries.push(makeLogEntry('gc'));
-    gc = 1;
-  }
-  let eventloop = 0;
-  if (t.env.CSI_RM_EVENTLOOP) {
-    logEntries.push(makeLogEntry('eventloop'));
-    eventloop = 1;
-  }
-
-  return {gc, eventloop};
 }
 
 //
@@ -198,8 +140,6 @@ function* combinations(head, ...tail) {
 module.exports = {
   makeTestGenerator,
   combinations,
-  addPatchEntries,
-  addTimeSeriesEntries,
 };
 
 //
