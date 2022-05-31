@@ -256,10 +256,3 @@ async function get(url) {
       return res;
     });
 }
-
-// eslint-disable-next-line no-unused-vars
-async function wait(n) {
-  return new Promise(function(resolve) {
-    setTimeout(resolve, n);
-  });
-}
