@@ -1,11 +1,12 @@
 'use strict';
 
+//
 // this test module is the last one written and uses better logic than the
 // other server-log testing modules.
-// - does not use the expected log entries created by makeTestGenerator()
-// - uses waitForLines() allowing more specific wait conditions
 // - waits for specific sets of log entries as opposed to a line count
-// -
+// - doesn't require log entries to be in a specific order
+// - can ignore duplicate log entries (gc, eventloop)
+//
 
 const fsp = require('fs').promises;
 const path = require('path');
