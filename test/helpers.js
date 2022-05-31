@@ -14,7 +14,6 @@ const defaultOptions = {
   basePort: 8888,
 };
 
-
 //
 // makeTestGenerator() returns a generator function that returns tests
 // for all combinations of server (simple, express), protocols (server:
