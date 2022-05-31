@@ -11,14 +11,8 @@ const {makeTestGenerator} = require('../test/helpers');
 const {checks, makeLogEntryChecker, makePatchEntryCheckers} = require('../test/checks');
 
 const pdj = require('../test/servers/package.json');
-// these are the log entries that are always present.
-function getBaseLogEntries() {
-  return [[
-    makeLogEntryChecker('header', pdj),
-  ]];
-}
 
-const tests = makeTestGenerator({getBaseLogEntries});
+const tests = makeTestGenerator({});
 
 const metricsEntries = [
   makeLogEntryChecker('metrics'),

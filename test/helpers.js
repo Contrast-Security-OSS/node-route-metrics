@@ -142,13 +142,8 @@ if (!module.parent) {
     console.log(c.reduce((consol, single) => Object.assign(consol, single), {}));
   }
   function getEnv() {return [{bruce: 'wenxin'}]}
-  function getBaseLogEntries() {
-    return [[
-      {some: 'kind', of: 'entry'},
-      {some: 'other', kind: 'too'},
-    ]];
-  }
-  const g = makeTestGenerator({getEnv, getBaseLogEntries, addPatchLogEntries: true});
+
+  const g = makeTestGenerator({getEnv, addPatchLogEntries: true});
   for (const t of g()) {
     // eslint-disable-next-line no-console
     console.log(t);

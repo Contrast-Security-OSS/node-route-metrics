@@ -28,14 +28,6 @@ const pdj = require('../test/servers/package.json');
 
 // get helpful output when true and tests fail
 const debugging = false;
-//
-// return the log entries that are always present.
-//
-function getBaseLogEntries() {
-  return [[
-    makeLogEntryChecker('header', pdj),
-  ]];
-}
 
 // returns an array of additional env var settings to make combinations with
 function getEnv(defaultEnv) {
@@ -45,7 +37,7 @@ function getEnv(defaultEnv) {
   ];
 }
 
-const tests = makeTestGenerator({getBaseLogEntries, getEnv});
+const tests = makeTestGenerator({getEnv});
 
 // save these initial values
 const previousTLS = !!process.env.NODE_TLS_REJECT_UNAUTHORIZED;
