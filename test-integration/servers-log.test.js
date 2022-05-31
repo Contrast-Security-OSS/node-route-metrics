@@ -8,7 +8,7 @@ const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
 const {makeTestGenerator} = require('../test/helpers');
-const {checks, makeLogEntryChecker} = require('../test/checks');
+const {checks, makeLogEntryChecker, makePatchEntryCheckers} = require('../test/checks');
 
 const pdj = require('../test/servers/package.json');
 // these are the log entries that are always present.
@@ -37,8 +37,13 @@ describe('server log tests', function() {
   for (const t of tests()) {
     let testServer;
 
+    // build the array of expected log entries.
+    const logEntries = [makeLogEntryChecker('header', pdj)];
+    const patchEntries = makePatchEntryCheckers(t);
+    logEntries.push(...patchEntries);
+    logEntries.push(...metricsEntries);
+
     const {server, base, desc, nodeArgs, appArgs} = t;
-    t.logEntries = t.logEntries.concat(metricsEntries);
 
     describe(desc, function() {
       this.timeout(10000);
@@ -96,7 +101,23 @@ describe('server log tests', function() {
         const subset = t.logEntries.filter(e => {
           return e.type === 'header' || e.type === 'patch';
         });
-        await checks.waitForLinesAndCheck(subset);
+
+        const typesNeeded = {
+          header: 1,
+          patch: patchEntries.length,
+        };
+        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
+
+        // make sure all header and patch entries are present
+        expect(logLines.length).gte(linesNeeded, 'not enough lines');
+        const logObjects = logLines.map(line => JSON.parse(line));
+
+        for (let i = 0; i < subset.length; i++) {
+          expect(subset[i]).property('validator').a('function', `$missing validator index ${i}`);
+          const {validator} = subset[i];
+          expect(logObjects[i]).property('type').equal(subset[i].type);
+          validator(logObjects[i].entry);
+        }
       });
 
       it('post and get entries are present', async function() {
@@ -106,20 +127,51 @@ describe('server log tests', function() {
         await post(`${base}/meta`, obj);
         await get(`${base}/info`);
 
-        await checks.waitForLinesAndCheck(t.logEntries);
+        const typesNeeded = {
+          header: 1,
+          patch: patchEntries.length,
+          metrics: 3,
+        };
+        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
+
+        // make sure all header and patch entries are present
+        expect(logLines.length).gte(linesNeeded, 'not enough lines');
+        const logObjects = logLines.map(line => JSON.parse(line));
+
+        for (let i = 0; i < logEntries.length; i++) {
+          expect(logEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
+          const {validator} = logEntries[i];
+          expect(logObjects[i]).property('type').equal(logEntries[i].type);
+          validator(logObjects[i].entry);
+        }
       });
 
       it('do not write a record if end() is not called', async function() {
-        const expected = t.logEntries.slice();
 
-        return post(`${base}/stop/0`, {})
+        await post(`${base}/stop/0`, {})
           .then(() => {
             throw new Error('the server should not return a response');
           })
           .catch(e => {
             expect(e.code).equal('ECONNRESET');
-          })
-          .then(() => checks.waitForLinesAndCheck(expected));
+          });
+
+        const typesNeeded = {
+          header: 1,
+          patch: patchEntries.length,
+        };
+        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
+
+        // make sure all header and patch entries are present
+        expect(logLines.length).gte(linesNeeded, 'not enough lines');
+        const logObjects = logLines.map(line => JSON.parse(line));
+
+        for (let i = 0; i < logEntries.length; i++) {
+          expect(logEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
+          const {validator} = logEntries[i];
+          expect(logObjects[i]).property('type').equal(logEntries[i].type);
+          validator(logObjects[i].entry);
+        }
       });
     });
   }

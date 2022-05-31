@@ -3,8 +3,7 @@
 // this test module is the last one written and uses better logic than the
 // other server-log testing modules.
 // - does not use the expected log entries created by makeTestGenerator()
-// - uses waitForLines() vs. waitForLinesAndCheck(), allowing more specific
-// wait conditions
+// - uses waitForLines() allowing more specific wait conditions
 // - waits for specific sets of log entries as opposed to a line count
 // -
 

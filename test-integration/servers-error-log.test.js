@@ -8,17 +8,10 @@ const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
 const {makeTestGenerator} = require('../test/helpers');
-const {checks, makeLogEntryChecker} = require('../test/checks');
+const {checks, makeLogEntryChecker, makePatchEntryCheckers} = require('../test/checks');
 
 const pdj = require('../test/servers/package.json');
-// start the test definitions
-// these are the log entries that are always present.
-function getBaseLogEntries() {
-  return [[
-    makeLogEntryChecker('header', pdj),
-    makeLogEntryChecker('unknown-config-items'),
-  ]];
-}
+
 function getEnv() {
   return [{
     CONTRAST_DEV: true,
@@ -32,7 +25,7 @@ const previousTLS = process.env.NODE_TLS_REJECT_UNAUTHORIZED;
 
 // make the test generator. it creates the combinations for testing. the
 // assumptions can be modified via options.
-const tests = makeTestGenerator({getBaseLogEntries, getEnv});
+const tests = makeTestGenerator({getEnv});
 
 describe('server error log tests', function() {
   //
@@ -40,8 +33,14 @@ describe('server error log tests', function() {
   // combination specified.
   //
   for (const t of tests()) {
-    const {server, logEntries} = t;
+    const {server} = t;
     const env = Object.assign({}, process.env, t.env);
+
+    // build the array of expected log entries.
+    const logEntries = [makeLogEntryChecker('header', pdj)];
+    logEntries.push(makeLogEntryChecker('unknown-config-items'));
+    const patchEntries = makePatchEntryCheckers(t);
+    logEntries.push(...patchEntries);
 
     describe(t.desc, function() {
       let testServer;
@@ -99,7 +98,23 @@ describe('server error log tests', function() {
       // the test
       //
       it('header and patch entries are present after startup', async function() {
-        await checks.waitForLinesAndCheck(logEntries);
+        const typesNeeded = {
+          header: 1,
+          patch: patchEntries.length,
+          'unknown-config-items': 1
+        };
+        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
+
+        // make sure all header and patch entries are present
+        expect(logLines.length).gte(linesNeeded, 'not enough lines');
+        const logObjects = logLines.map(line => JSON.parse(line));
+
+        for (let i = 0; i < logEntries.length; i++) {
+          expect(logEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
+          const {validator} = logEntries[i];
+          expect(logObjects[i]).property('type').equal(logEntries[i].type);
+          validator(logObjects[i].entry);
+        }
       });
 
     });

@@ -5,23 +5,6 @@ const os = require('os');
 const {expect} = require('chai');
 
 /**
- * waitForLinesAndCheck() is deprecated
- */
-async function waitForLinesAndCheck(expected, options = {}) {
-  const needed = ('needed' in options) ? options.needed : expected.length;
-  const {lines: rawLines} = await waitForLines(needed, options);
-  const lines = rawLines.map(JSON.parse);
-  expect(lines).exist;
-  expect(lines.length).gte(needed, 'not enough lines');
-  for (let i = 0; i < expected.length; i++) {
-    const {validator} = expected[i];
-    expect(lines).property(i).exist;
-    expect(lines[i]).property('type').equal(expected[i].type);
-    validator(lines[i].entry);
-  }
-}
-
-/**
  * waitForLines() will wait for either a specific number of lines or for specified
  * lines to appear in the log file. the original implementation was for a number
  * lines but was problematic with the introduction of time-series entries (gc and
@@ -278,7 +261,6 @@ function checkUnknownConfigItems(option) {
  */
 const checks = {
   waitForLines,
-  waitForLinesAndCheck,
   header: checkHeader,
   patch: checkPatch,
   metrics: checkMetrics,
