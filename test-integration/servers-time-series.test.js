@@ -78,6 +78,7 @@ describe('server time-series tests', function() {
 
         // don't wait so long
         process.env.CSI_ROUTE_METRICS_TIME_SERIES_INTERVAL = 100;
+        process.env.CSI_ROUTE_METRICS_AVERAGING_INTERVAL = 250;
         return fsp.unlink('route-metrics.log')
           .catch(e => null)
           .then(() => {
@@ -125,13 +126,28 @@ describe('server time-series tests', function() {
       // the tests start here
       //
       it('header, patch, and time-series entries are all correct', async function() {
-        const {checkers: timeSeriesEntries} = makeTimeSeriesCheckers(t);
-        const totalLinesNeeded = expectedLogEntries.length + timeSeriesEntries.length;
-        const {lines: logLines} = await checks.waitForLines(totalLinesNeeded);
+        this.timeout(12000);
+        const {checkers: timeSeriesEntries, gc, eventloop, proc} = makeTimeSeriesCheckers(t);
+        const typesNeeded = {
+          header: 1,
+          patch: expectedLogEntries.length - 1,
+          gc,
+          eventloop,
+          proc
+        };
+        const linesNeeded = expectedLogEntries.length + timeSeriesEntries.length;
 
-        // make sure all header and patch entries are present
-        expect(logLines.length).gte(expectedLogEntries.length, 'not enough lines');
+        const options = {maxWaitTime: 10000};
+        const {lines: logLines} = await checks.waitForLines(typesNeeded, options);
+
+        if (debugging && logLines.length < linesNeeded) {
+          // eslint-disable-next-line no-console
+          console.log(logLines);
+        }
+
         const logObjects = logLines.map(line => JSON.parse(line));
+        // make sure all header and patch entries are present
+        expect(logLines.length).gte(linesNeeded, 'not enough lines');
 
         for (let i = 0; i < expectedLogEntries.length; i++) {
           expect(expectedLogEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
@@ -140,10 +156,24 @@ describe('server time-series tests', function() {
           validator(logObjects[i].entry);
         }
 
-        // now look at the expected time series entries
+        // time series can appear multiple times
+        const tsEntries = {};
+        for (const ts of timeSeriesEntries) {
+          tsEntries[ts.type] = ts;
+        }
+
+        // only check the remaining items (time-series)
         const remaining = logObjects.slice(expectedLogEntries.length);
-        for (let i = 0; i < timeSeriesEntries.length; i++) {
-          expect(remaining[i]).property('type').equal(timeSeriesEntries[i].type);
+
+        // allows time-series and metrics to be interleaved and in any order.
+        // probably a candidate for a utility function so it can be applied
+        // to other tests.
+        for (const entry of remaining) {
+          if (entry.type in tsEntries) {
+            tsEntries[entry.type].validator(entry.entry);
+          } else {
+            throw new Error('unexpected entry type');
+          }
         }
       });
 
@@ -170,7 +200,7 @@ describe('server time-series tests', function() {
           eventloop,
         };
 
-        const options = {totalWaitTime: 3500};
+        const options = {maxWaitTime: 3500};
         const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded, options);
 
         if (debugging && logLines.length < linesNeeded) {

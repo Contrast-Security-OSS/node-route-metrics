@@ -37,6 +37,15 @@ class ServerSkeleton {
     const p = new Promise((resolve, reject) => {
       res = resolve;
     });
+    // kind of sucks but make garbage collection happen faster so testing
+    // doesn't take forever. this is especially needed for tests that just
+    // wait for gc to appear.
+    // eslint-disable-next-line no-unused-vars
+    let buffer;
+    const interval = setInterval(function() {
+      buffer = Buffer.alloc(1000000);
+    }, 50);
+    interval.unref();
 
     const listening = () => {
       started += 1;

@@ -31,9 +31,9 @@ async function waitForLines(needed, options = {}) {
   } else {
     linesNeeded = countLinesNeeded(needed);
   }
-  const totalWaitTime = ('totalWaitTime' in options) ? options.totalWaitTime : 100;
+  const maxWaitTime = ('maxWaitTime' in options) ? options.maxWaitTime : 100;
   const loopWaitTime = ('loopWaitTime' in options) ? options.loopWaitTime : 10;
-  const maxTries = Math.ceil(totalWaitTime / loopWaitTime);
+  const maxTries = Math.ceil(maxWaitTime / loopWaitTime);
   const start = Date.now();
 
   let lines;
@@ -245,7 +245,15 @@ function checkEventloop(entry, overrides) {
   for (const percentile of [50, 75, 90, 95, 99]) {
     expect(entry[percentile]).a('number');
   }
+}
 
+function checkProc(entry, overrides) {
+  expect(entry).property('cpuUserAvg').a('number');
+  expect(entry).property('cpuSystemAvg').a('number');
+  expect(entry).property('rss').a('number');
+  expect(entry).property('heapTotal').a('number');
+  expect(entry).property('heapUsedAvg').a('number');
+  expect(entry).property('externalAvg').a('number');
 }
 
 /**
@@ -266,6 +274,7 @@ const checks = {
   metrics: checkMetrics,
   gc: checkGarbageCollection,
   eventloop: checkEventloop,
+  proc: checkProc,
   'unknown-config-items': checkUnknownConfigItems,
 };
 
@@ -337,8 +346,9 @@ function makeTimeSeriesCheckers(t) {
     checkers.push(makeLogEntryChecker('eventloop'));
     eventloop = 1;
   }
+  checkers.push(makeLogEntryChecker('proc'));
 
-  return {checkers, gc, eventloop};
+  return {checkers, gc, eventloop, proc: 1};
 }
 
 function makeMetricsChecker(method, pathEnd) {
