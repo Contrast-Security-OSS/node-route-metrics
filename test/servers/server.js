@@ -34,7 +34,7 @@ class Server {
           if (Server.isAgentStartupNoise(s)) {
             return;
           }
-          reject(new Error(`unexpected output ${s.slice(0, -1)}`));
+          reject(new Error(`unexpected output "${s.slice(0, -1)}"`));
         }
       });
       this.cp.stderr.on('data', function(d) {
@@ -101,7 +101,7 @@ class Server {
       // ignore blank lines
       return true;
     }
-    if (/^@contrast\/agent \d+\.\d+\.\d+\n/.test(s)) {
+    if (/@contrast\/agent \d+\.\d+\.\d+/.test(s)) {
       return true;
     }
     if (/--------------------------------------/.test(s)) {
