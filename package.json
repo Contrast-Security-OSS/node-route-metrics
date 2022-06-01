@@ -29,7 +29,6 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "minimist": "^1.2.6",
     "shimmer": "^1.2.1"
   },
   "devDependencies": {
