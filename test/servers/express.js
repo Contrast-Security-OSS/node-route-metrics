@@ -128,6 +128,22 @@ app.get('/wait/:time/:code?', function(req, res, next) {
   }, time);
 });
 
+let loopCount = 0;
+app.get('/loop/:n', function(req, res) {
+  let n = +req.params.n;
+  if (Number.isNaN(n) || n < 0 || n > 1000000) {
+    n = 1000000;
+  }
+  let b = Buffer.alloc(100000);
+  // do a hard loop to impact the eventloop
+  for (let i = 0; i < n; i++) {
+    // eslint-disable-next-line no-unused-vars
+    b = Buffer.alloc(100000);
+  }
+  loopCount += 1;
+  res.send(JSON.stringify({loopCount}));
+});
+
 //
 // create the server and start listening.
 //
