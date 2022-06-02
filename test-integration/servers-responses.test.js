@@ -3,8 +3,8 @@
 const fetch = require('node-fetch');
 const {expect} = require('chai');
 
-const Server = require('./servers/server');
-const {makeTestGenerator} = require('./servers/helpers');
+const Server = require('../test/servers/server');
+const {makeTestGenerator} = require('../test/helpers');
 
 const tests = makeTestGenerator({useEmptyNodeArgs: true});
 

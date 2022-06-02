@@ -18,13 +18,13 @@ class Server {
       this.cp.on('exit', (...args) => this.exitHandler(...args));
       this.havePid = false;
       this.cp.stdout.on('data', function(d) {
+        const s = d.toString();
         if (this.havePid) {
           // this helps debug if there is a console log buried somewhere
           // eslint-disable-next-line no-console
-          console.log('stdout:', d.toString());
+          console.log('stdout:', s);
           return;
         }
-        const s = d.toString();
         // wait to see the pid output. by test convention that's when
         // the callback of server.listen() has been called.
         if (/^\d+\n$/.test(s)) {
@@ -34,7 +34,7 @@ class Server {
           if (Server.isAgentStartupNoise(s)) {
             return;
           }
-          reject(new Error(`unexpected output ${s.slice(0, -1)}`));
+          reject(new Error(`unexpected output "${s.slice(0, -1)}"`));
         }
       });
       this.cp.stderr.on('data', function(d) {
@@ -101,7 +101,7 @@ class Server {
       // ignore blank lines
       return true;
     }
-    if (/^@contrast\/agent \d+\.\d+\.\d+\n/.test(s)) {
+    if (/@contrast\/agent \d+\.\d+\.\d+/.test(s)) {
       return true;
     }
     if (/--------------------------------------/.test(s)) {

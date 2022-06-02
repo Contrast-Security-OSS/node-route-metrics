@@ -1,0 +1,36 @@
+name: on-new-code
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches: '*'
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        #os: [ubuntu-latest, windows-latest, macos-latest]
+        os: [ubuntu-latest]
+        node-version: [16]
+    name: Test on ${{ matrix.os }} with node v${{ matrix.node-version }}
+    steps:
+    - name: Setup Node.js ${{ matrix.node-version }}
+      uses: actions/setup-node@v2
+      with:
+        node-version: ${{ matrix.node-version }}
+        check-latest: true
+    - name: Checkout repository
+      uses: actions/checkout@v2
+    - name: Install dependencies
+      run: npm install
+    - name: Run tests
+      run: npm test
+#    - if: matrix.node-version == 14
+#      name: generate code coverage
+#      run: npm run test:ci
+#    - if: matrix.node-version == 14
+#      name: send coverage to codecov
+#      uses: codecov/codecov-action@v1
+#      with:
+#        token: ${{ secrets.CODECOV_TOKEN}}

@@ -12,8 +12,8 @@
   ],
   "scripts": {
     "preinstall": "cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
-    "test": "mocha 'test/**/*.test.js'",
-    "test:cov": "nyc mocha $(find test -name '*.test.js')",
+    "test": "mocha --exclude 'node_modules/**/*' '**/*.test.js'",
+    "test:cov": "nyc npm run test",
     "log-processor": "node ./lib/log-processor/index.js"
   },
   "keywords": [
@@ -29,11 +29,10 @@
   ],
   "license": "MIT",
   "dependencies": {
-    "minimist": "^1.2.6",
     "shimmer": "^1.2.1"
   },
   "devDependencies": {
-    "@contrast/agent": "^4.19.1",
+    "@contrast/agent": "^4.19.2",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "eslint": "^7.32.0",
