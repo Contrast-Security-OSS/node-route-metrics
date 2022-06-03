@@ -132,7 +132,7 @@ let loopCount = 0;
 app.get('/loop/:n', function(req, res) {
   let n = +req.params.n;
   if (Number.isNaN(n) || n < 0 || n > 1000000) {
-    n = 1000000;
+    n = 1000;
   }
   let b = Buffer.alloc(100000);
   // do a hard loop to impact the eventloop
