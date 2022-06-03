@@ -25,7 +25,8 @@
   ],
   "author": "Contrast Security, Inc.",
   "contributors": [
-    "Bruce A. MacNaughton <bmacnaughton@gmail.com>"
+    "Bruce A. MacNaughton <bmacnaughton@gmail.com>",
+    "Dmitriy Petrov <pdmitriy687@gmail.com>"
   ],
   "license": "MIT",
   "dependencies": {
