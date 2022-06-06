@@ -13,7 +13,7 @@
   "scripts": {
     "preinstall": "cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
     "test": "mocha --exclude 'node_modules/**/*' '**/*.test.js'",
-    "test:cov": "nyc npm run test",
+    "test:cov": "nyc npm --reporter=json-summary --reporter=text-summary --check-coverage=true --lines 95 --branches 95 --statements 95 --functions 95 run test",
     "log-processor": "node ./lib/log-processor/index.js"
   },
   "keywords": [
