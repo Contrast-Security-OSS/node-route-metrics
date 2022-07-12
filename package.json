@@ -11,9 +11,9 @@
     "example/template.js"
   ],
   "scripts": {
-    "preinstall": "run-script-os",
-    "preinstall:windows": "powershell write-host -fore Red WARN: DETECT-SECRETS IS NOT USED ON WINDOWS!",
-    "preinstall:default": "cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
+    "prepare": "run-script-os",
+    "prepare:windows": "powershell write-host -fore Red WARN: DETECT-SECRETS IS NOT USED ON WINDOWS!",
+    "prepare:default": "cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
     "test": "mocha --exclude 'node_modules/**/*' '**/*.test.js'",
     "test:cov": "nyc npm run test",
     "log-processor": "node ./lib/log-processor/index.js"
