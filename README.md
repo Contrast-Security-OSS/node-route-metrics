@@ -38,8 +38,8 @@ log file, `route-metrics.log` by default.
 
 Once the `route-metrics` agent has been used to generate a log file, it's
 useful to do something with the output. The included log-processor can be
-executed via `npx log-processor`. So to process the default log file, use
-`npx log-processor route-metrics.log`.
+executed via `npx --package @contrast/route-metrics log-processor`.
+So to process the default log file, use `npx --package @contrast/route-metrics log-processor route-metrics.log`.
 
 The log processor will read the log file, output some informational text,
 and use the requested reporter to write the output.
