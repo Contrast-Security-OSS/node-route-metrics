@@ -2,7 +2,13 @@
 
 const Server = require('./skeleton');
 
-const {contrast_agent: agent, contrast_tracker: tracker} = global;
+const {
+  __contrast: raspAgent,
+  contrast_agent: nodeAndProtectAgent,
+  contrast_tracker: tracker
+} = global;
+
+const agent = raspAgent || nodeAndProtectAgent;
 
 // the app
 const express = require('express');

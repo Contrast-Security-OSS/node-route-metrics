@@ -42,6 +42,7 @@ describe('server log tests', function() {
     describe(desc, function() {
       this.timeout(10000);
       let lastArgs;
+      let lastLogLines;
       //
       // start the server
       //
@@ -83,8 +84,10 @@ describe('server log tests', function() {
       afterEach(function() {
         // if a test failed make it easier to debug how the server was created
         if (this.currentTest.state === 'failed') {
-          // eslint-disable-next-line no-console
+          // eslint-disable no-console
           console.log('new Server(', lastArgs, ')');
+          console.log('last logLines', lastLogLines);
+          console.log('last logEntries', logEntries.map(e => e.validator.show()));
         }
       });
 
@@ -101,8 +104,8 @@ describe('server log tests', function() {
           patch: patchEntries.length,
         };
         const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
+        lastLogLines = logLines;
 
-        // make sure all header and patch entries are present
         expect(logLines.length).gte(linesNeeded, 'not enough lines');
         const logObjects = logLines.map(line => JSON.parse(line));
 
@@ -127,6 +130,7 @@ describe('server log tests', function() {
           metrics: 3,
         };
         const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
+        lastLogLines = logLines;
 
         // make sure all header and patch entries are present
         expect(logLines.length).gte(linesNeeded, 'not enough lines');
@@ -155,6 +159,7 @@ describe('server log tests', function() {
           patch: patchEntries.length,
         };
         const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
+        lastLogLines = logLines;
 
         // make sure all header and patch entries are present
         expect(logLines.length).gte(linesNeeded, 'not enough lines');

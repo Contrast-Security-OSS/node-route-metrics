@@ -283,7 +283,9 @@ const checks = {
  * to choose the correct checker for the type.
  */
 function makeLogEntryChecker(type, ...args) {
-  return {type, validator: (entry) => checks[type](entry, ...args)};
+  const validator = (entry) => checks[type](entry, ...args);
+  validator.show = () => {return {type, args: [...args]}};
+  return {type, validator};
 }
 
 /**
@@ -291,7 +293,6 @@ function makeLogEntryChecker(type, ...args) {
  */
 const patchHttp = makeLogEntryChecker('patch', 'http');
 const patchHttps = makeLogEntryChecker('patch', 'https');
-const patchContrast = makeLogEntryChecker('patch', '@contrast/agent');
 
 //
 // makePatchEntryCheckers() was part of the test generator but that didn't allow
@@ -311,25 +312,38 @@ function makePatchEntryCheckers(t) {
   // https depending on what protocols are being loaded.
   let httpPatchEntryAdded = false;
   let httpsPatchEntryAdded = false;
-  if (t.agentPresent || expressPresent) {
-    checkers.push(patchHttp);
-    httpPatchEntryAdded = true;
-  }
-  // as of v4.?.? the agent requires axios which requires https, so first there is
-  // a patch entry for the contrast node-agent then one for https when axios requires
-  // it.
-  if (t.agentPresent) {
-    checkers.push(patchContrast);
-    checkers.push(patchHttps);
-    httpsPatchEntryAdded = true;
-  }
-  t.loadProtos.forEach(lp => {
-    if (lp === 'http' && !httpPatchEntryAdded) {
+
+  if (t.agentPresent === '@contrast/agent') {
+    // as of v4.?.? the agent requires axios which requires https, so first there is
+    // a patch entry for the contrast node-agent then one for https when axios requires
+    // it. rasp-v3 doesn't require https via axios.
+    if (!httpPatchEntryAdded) {
       checkers.push(patchHttp);
-    } else if (lp === 'https' && !httpsPatchEntryAdded) {
+      httpPatchEntryAdded = true;
+    }
+    checkers.push(makeLogEntryChecker('patch', t.agentPresent));
+    checkers.push(patchHttps);
+    if (t.loadProtos.includes('https')) {
+    }
+  } else if (t.agentPresent === '@contrast/rasp-v3') {
+    checkers.push(makeLogEntryChecker('patch', t.agentPresent));
+    if (t.loadProtos.includes('http') && !httpPatchEntryAdded || expressPresent) {
+      checkers.push(patchHttp);
+      httpPatchEntryAdded = true;
+    }
+    if (t.loadProtos.includes('https')) {
       checkers.push(patchHttps);
     }
-  });
+  } else if (!t.agentPresent) {
+    if (t.loadProtos.includes('http') && !httpPatchEntryAdded || expressPresent) {
+      checkers.push(patchHttp);
+    }
+    if (t.loadProtos.includes('https')) {
+      checkers.push(patchHttps);
+    }
+  } else {
+    throw new Error(`unexpected agentPresent value: ${t.agentPresent}`);
+  }
 
   return checkers;
 }
