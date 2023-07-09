@@ -2,16 +2,7 @@
 
 const Server = require('./skeleton');
 
-const {
-  __contrast: raspAgent,
-  contrast_agent: nodeAndProtectAgent,
-  contrast_tracker: nodeAndProtectTracker
-} = global;
-
-const raspTracker = raspAgent?.tracking;
-
-const agent = raspAgent || nodeAndProtectAgent;
-const tracker = raspTracker || nodeAndProtectTracker;
+const {agent, tracker} = Server.getAgentGlobals();
 
 function app(req, res) {
   res.statusCode = 200;

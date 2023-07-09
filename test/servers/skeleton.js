@@ -97,4 +97,22 @@ ServerSkeleton.getProtocols = function(args) {
   return protocols;
 };
 
+//
+// helper for getting the the agent-specific global object and components
+//
+ServerSkeleton.getAgentGlobals = function() {
+  const {
+    __contrast: raspAgent,
+    contrast_agent: nodeAndProtectAgent,
+    contrast_tracker: nodeAndProtectTracker
+  } = global;
+
+  const raspTracker = raspAgent?.tracking;
+
+  const agent = raspAgent || nodeAndProtectAgent;
+  const tracker = raspTracker || nodeAndProtectTracker;
+
+  return {agent, tracker};
+};
+
 module.exports = ServerSkeleton;

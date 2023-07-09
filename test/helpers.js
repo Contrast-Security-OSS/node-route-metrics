@@ -4,7 +4,7 @@ const util = require('util');
 const {AGENTS} = require('../lib/patcher');
 
 const defaultEnv = {
-  CONTRAST_DEV: true
+  CONTRAST_DEV: true,
 };
 
 const defaultOptions = {

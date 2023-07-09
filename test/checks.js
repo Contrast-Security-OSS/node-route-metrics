@@ -306,15 +306,18 @@ function makePatchEntryCheckers(t) {
   const expressPresent = t.server === 'express';
 
   // the expected sequence of patches is specific to each combination of agent and
-  // express. @contrast/protect-agent needs to be added.
+  // express. @contrast/protect-agent needs to be added. N.B. as of node 16.19.1,
+  // the agent cannot be detected by route-metrics, because it is being loaded via
+  // the '-r' or '--request' command line opion. so it is being detected by looking
+  // at process.execArgv when the first module in the @contrast scope is loaded.
   if (t.agentPresent === '@contrast/agent') {
     // http is required first because, even though the node agent is loaded first,
     // it requires http before it completes loading, and patch events are only emitted
     // once patching is completed.
     //
-    // as of v4.?.? the agent also requires axios, which requires https, so next there is
-    // a patch entry for the contrast node-agent then one for https when axios eventually
-    // requires it.
+    // also, as of v4.?.? the agent also requires axios, which requires https, so next
+    // there is a patch entry for the contrast node-agent then one for https when axios
+    // eventually requires it.
     checkers.push(patchHttp);
     checkers.push(makeLogEntryChecker('patch', t.agentPresent));
     checkers.push(patchHttps);

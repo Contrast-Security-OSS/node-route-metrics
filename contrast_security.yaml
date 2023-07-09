@@ -12,7 +12,7 @@ agent:
   logger:
     level: debug
   service:
-    enable: true
+    enable: false
     grpc: true
     logger:
       path: speedracer.log
