@@ -84,10 +84,11 @@ describe('server log tests', function() {
       afterEach(function() {
         // if a test failed make it easier to debug how the server was created
         if (this.currentTest.state === 'failed') {
-          // eslint-disable no-console
+          /* eslint-disable no-console */
           console.log('new Server(', lastArgs, ')');
           console.log('last logLines', lastLogLines);
           console.log('last logEntries', logEntries.map(e => e.validator.show()));
+          /* eslint-enable no-console */
         }
       });
 

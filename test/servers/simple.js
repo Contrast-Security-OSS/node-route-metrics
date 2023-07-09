@@ -2,7 +2,16 @@
 
 const Server = require('./skeleton');
 
-const {contrast_agent: agent, contrast_tracker: tracker} = global;
+const {
+  __contrast: raspAgent,
+  contrast_agent: nodeAndProtectAgent,
+  contrast_tracker: nodeAndProtectTracker
+} = global;
+
+const raspTracker = raspAgent?.tracking;
+
+const agent = raspAgent || nodeAndProtectAgent;
+const tracker = raspTracker || nodeAndProtectTracker;
 
 function app(req, res) {
   res.statusCode = 200;
@@ -58,7 +67,7 @@ function dispatch(req, res, body) {
         tracker: !!tracker,
       };
       if (tracker) {
-        response.tracked = !!tracker.getData(s);
+        response.tracked = !!(tracker.getData || tracker.getMetadata)(s);
       }
       res.end(JSON.stringify(response));
       return;

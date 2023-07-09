@@ -302,40 +302,38 @@ const patchHttps = makeLogEntryChecker('patch', 'https');
 //
 function makePatchEntryCheckers(t) {
   const checkers = [];
-  // kind of funky tests but good enough. both the agent and express
-  // require http.
+  // both the node-agent and express require http, so it will be present
   const expressPresent = t.server === 'express';
 
-  // this code is specific to each combination - if the contrast agent is loaded then
-  // http will be loaded before the agent completes loading. if express is loaded it
-  // also loads http. finally, both the simple server and express will load http and/or
-  // https depending on what protocols are being loaded.
-  let httpPatchEntryAdded = false;
-  let httpsPatchEntryAdded = false;
-
+  // the expected sequence of patches is specific to each combination of agent and
+  // express. @contrast/protect-agent needs to be added.
   if (t.agentPresent === '@contrast/agent') {
-    // as of v4.?.? the agent requires axios which requires https, so first there is
-    // a patch entry for the contrast node-agent then one for https when axios requires
-    // it. rasp-v3 doesn't require https via axios.
-    if (!httpPatchEntryAdded) {
-      checkers.push(patchHttp);
-      httpPatchEntryAdded = true;
-    }
+    // http is required first because, even though the node agent is loaded first,
+    // it requires http before it completes loading, and patch events are only emitted
+    // once patching is completed.
+    //
+    // as of v4.?.? the agent also requires axios, which requires https, so next there is
+    // a patch entry for the contrast node-agent then one for https when axios eventually
+    // requires it.
+    checkers.push(patchHttp);
     checkers.push(makeLogEntryChecker('patch', t.agentPresent));
     checkers.push(patchHttps);
-    if (t.loadProtos.includes('https')) {
-    }
   } else if (t.agentPresent === '@contrast/rasp-v3') {
+    //
+    // rasp-v3 does not require either http or https, so it's the first patch entry.
+    //
     checkers.push(makeLogEntryChecker('patch', t.agentPresent));
-    if (t.loadProtos.includes('http') && !httpPatchEntryAdded || expressPresent) {
+    if (t.loadProtos.includes('http') || expressPresent) {
       checkers.push(patchHttp);
-      httpPatchEntryAdded = true;
     }
     if (t.loadProtos.includes('https')) {
       checkers.push(patchHttps);
     }
   } else if (!t.agentPresent) {
-    if (t.loadProtos.includes('http') && !httpPatchEntryAdded || expressPresent) {
+    //
+    // no agent, so http and https are the only patch entries.
+    //
+    if (t.loadProtos.includes('http') || expressPresent) {
       checkers.push(patchHttp);
     }
     if (t.loadProtos.includes('https')) {

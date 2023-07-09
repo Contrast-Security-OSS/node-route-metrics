@@ -5,10 +5,13 @@ const Server = require('./skeleton');
 const {
   __contrast: raspAgent,
   contrast_agent: nodeAndProtectAgent,
-  contrast_tracker: tracker
+  contrast_tracker: nodeAndProtectTracker
 } = global;
 
+const raspTracker = raspAgent?.tracking;
+
 const agent = raspAgent || nodeAndProtectAgent;
+const tracker = raspTracker || nodeAndProtectTracker;
 
 // the app
 const express = require('express');
@@ -53,7 +56,7 @@ echo.post('/meta', function(req, res, next) {
     tracker: !!tracker,
   };
   if (tracker) {
-    response.tracked = !!tracker.getData(s);
+    response.tracked = !!(tracker.getData || tracker.getMetadata)(s);
   }
   res.send(response);
 });
