@@ -302,7 +302,6 @@ function makeLogEntryChecker(type, ...args) {
  * predefined checkers for the three files we patch.
  */
 
-
 //
 // makePatchEntryCheckers() was part of the test generator but that didn't allow
 // modifying the header check for different env var configurations. so now
