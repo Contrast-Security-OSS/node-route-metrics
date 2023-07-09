@@ -3,6 +3,9 @@
 
 /**
  * tool to hit various end points on a server for testing and demos.
+ *
+ * the express and simple in test/servers/ implement these end points. run
+ * either using `node test/servers/express.js http:localhost:8888
  */
 
 const fs = require('fs');
@@ -53,8 +56,8 @@ for (let i = 0; i < args.length; i++) {
 if (requests.length === 0) {
   const ep = targets.map(t => t.ep.slice(1));
   /* eslint-disable */
-  console.log('usage: generate request...');
-  console.log('  valid requests', ep.join(', '));
+  console.log('usage: generate-route-entries target...');
+  console.log('  valid targets', ep.join(', '));
   console.log('  env vars=default: POOL=10, ITERATIONS, MIN=40, MAX=80');
   /* eslint-enable */
 

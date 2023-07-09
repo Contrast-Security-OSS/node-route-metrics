@@ -15,7 +15,7 @@ module.exports = {
   labels: {
     title: 'this is my test server'
   },
-  // map routes that match the regex to the specified name. a route can
+  // group routes that match the regex and method as the specified name. a route can
   // match more than one regex.
   routes: [
     {name: 'noecho (ALL PARAMS)', method: 'POST', regex: /^\/noecho(\?.+)?/},
