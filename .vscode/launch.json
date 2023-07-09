@@ -7,7 +7,7 @@
   "configurations": [
     {
       "name": "simple",
-      "type": "pwa-node",
+      "type": "node",
       "request": "launch",
       "skipFiles": [
         "<node_internals>/**"
@@ -16,21 +16,21 @@
     },
     {
       "name": "server[agent]",
-      "type": "pwa-node",
+      "type": "node",
       "request": "launch",
       "skipFiles": [
         "<node_internals>/**"
       ],
       "runtimeArgs": [
         "-r", "${workspaceFolder}",
-        "-r", "@contrast/agent"
+        "-r", "${input:agent}"
       ],
       "args": ["${input:args}"],
       "program": "${workspaceFolder}/test/servers/${input:server}"
     },
     {
       "name": "current file",
-      "type": "pwa-node",
+      "type": "node",
       "request": "launch",
       "skipFiles": [
         "<node_internals>/**"
@@ -53,11 +53,11 @@
       "skipFiles": [
         "<node_internals>/**"
       ],
-      "type": "pwa-node"
+      "type": "node"
     },
     {
       "name": "current[custom]",
-      "type": "pwa-node",
+      "type": "node",
       "request": "launch",
       "skipFiles": [
         "<node_internals>/**"
@@ -80,6 +80,15 @@
     "options": [
       "simple",
       "express"
+    ]
+  }, {
+    "id": "agent",
+    "type": "pickString",
+    "description": "agent to run",
+    "options": [
+      "@contrast/agent",
+      "@contrast/rasp-v3",
+      "@contrast/protect-agent"
     ]
   }]
 }
