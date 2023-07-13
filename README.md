@@ -82,7 +82,7 @@ The `route-metrics` log processor is also configured via environment variables.
 - `CSI_RM_OUTPUT=1`       # if numeric writes to that file descriptor, else writes to that file name.
 - `CSI_RM_TEMPLATE`       # a template that defines how the output is grouped
 - `CSI_RM_MICROSECONDS`   # report times in microseconds instead of milliseconds. (json reporter
-always reports raw data, i.e., microseconds.)
+always reports raw data, i.e., microseconds or, in the case of the eventloop delay, nanoseconds.)
 
 ## using a template
 
