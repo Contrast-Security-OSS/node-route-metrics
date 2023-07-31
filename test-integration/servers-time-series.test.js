@@ -69,13 +69,6 @@ describe('server time-series tests', function() {
       // start the server
       //
       before(async function() {
-        // ignore the log entries created by the test generator. they do not
-        // take header overrides into account; the original implementation
-        // still works but should be replaced by explicit construction of the
-        // expected log entries.
-        expectedLogEntries.push(makeLogEntryChecker('header', pdj, overrides));
-        expectedLogEntries.push(...makePatchEntryCheckers(t));
-
         // don't wait so long
         process.env.CSI_ROUTE_METRICS_TIME_SERIES_INTERVAL = 100;
         process.env.CSI_ROUTE_METRICS_AVERAGING_INTERVAL = 250;
@@ -112,6 +105,16 @@ describe('server time-series tests', function() {
               expect(signal).equal(code);
             }
           });
+      });
+
+      beforeEach(function() {
+        // ignore the log entries created by the test generator. they do not
+        // take header overrides into account; the original implementation
+        // still works but should be replaced by explicit construction of the
+        // expected log entries.
+        expectedLogEntries.length = 0;
+        expectedLogEntries.push(makeLogEntryChecker('header', pdj, overrides));
+        expectedLogEntries.push(...makePatchEntryCheckers(t));
       });
 
       afterEach(function() {

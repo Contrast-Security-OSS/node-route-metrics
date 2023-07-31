@@ -30,12 +30,8 @@ describe('server log tests', function() {
   //
   for (const t of tests()) {
     let testServer;
-
-    // build the array of expected log entries.
-    const logEntries = [makeLogEntryChecker('header', pdj)];
-    const patchEntries = makePatchEntryCheckers(t);
-    logEntries.push(...patchEntries);
-    logEntries.push(...metricsEntries);
+    let logEntries;
+    let patchEntries;
 
     const {server, base, desc, nodeArgs, appArgs} = t;
 
@@ -79,6 +75,15 @@ describe('server log tests', function() {
               expect(signal).equal(code);
             }
           });
+      });
+
+      beforeEach(function() {
+        // build the array of expected log entries. these need to be done
+        // each test because a patch entry is removed after it's been checked.
+        logEntries = [makeLogEntryChecker('header', pdj)];
+        patchEntries = makePatchEntryCheckers(t);
+        logEntries.push(...patchEntries);
+        logEntries.push(...metricsEntries);
       });
 
       afterEach(function() {

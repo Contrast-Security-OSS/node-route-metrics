@@ -193,10 +193,20 @@ function checkHeader(header, pdj, overrides) {
 }
 
 /**
- * checkPatch() verifies a patch entry.
+ * checkPatch() verifies a patch entry. This approach does not allow
+ * multiple entries with the same name, but that shouldn't happen. It's
+ * done this way because the various different agents and versions result
+ * in different sequences of patches. For example, prior to node 16.19.1,
+ * with @contrast/agent, the http patch was first because patch entries
+ * were only made after the module was finished loading. But with 16.19.1,
+ * the http patch is second because the we cannot detect the actual loading
+ * of @contrast/agent; we only detect it by noting that it's required on
+ * the command line and at least one @contrast package is being loaded (all
+ * contrast agents require @contrast/something).
  */
-function checkPatch(entry, name, overrides) {
-  expect(entry).property('name').equal(name);
+function checkPatch(entry, patchNames) {
+  expect(entry).property('name').oneOf(patchNames);
+  patchNames.splice(patchNames.indexOf(entry.name), 1);
 }
 
 /**
@@ -291,8 +301,7 @@ function makeLogEntryChecker(type, ...args) {
 /**
  * predefined checkers for the three files we patch.
  */
-const patchHttp = makeLogEntryChecker('patch', 'http');
-const patchHttps = makeLogEntryChecker('patch', 'https');
+
 
 //
 // makePatchEntryCheckers() was part of the test generator but that didn't allow
@@ -302,6 +311,8 @@ const patchHttps = makeLogEntryChecker('patch', 'https');
 //
 function makePatchEntryCheckers(t) {
   const checkers = [];
+  let patchNames = [];
+
   // both the node-agent and express require http, so it will be present
   const expressPresent = t.server === 'express';
 
@@ -318,29 +329,36 @@ function makePatchEntryCheckers(t) {
     // also, as of v4.?.? the agent also requires axios, which requires https, so next
     // there is a patch entry for the contrast node-agent then one for https when axios
     // eventually requires it.
-    checkers.push(patchHttp);
-    checkers.push(makeLogEntryChecker('patch', t.agentPresent));
-    checkers.push(patchHttps);
+    patchNames = ['http', 'https', t.agentPresent];
+    checkers.push(makeLogEntryChecker('patch', patchNames));
+    checkers.push(makeLogEntryChecker('patch', patchNames));
+    checkers.push(makeLogEntryChecker('patch', patchNames));
   } else if (t.agentPresent === '@contrast/rasp-v3') {
     //
     // rasp-v3 does not require either http or https, so it's the first patch entry.
     //
-    checkers.push(makeLogEntryChecker('patch', t.agentPresent));
+    patchNames.push(t.agentPresent);
+    checkers.push(makeLogEntryChecker('patch', patchNames));
+
     if (t.loadProtos.includes('http') || expressPresent) {
-      checkers.push(patchHttp);
+      patchNames.push('http');
+      checkers.push(makeLogEntryChecker('patch', patchNames));
     }
     if (t.loadProtos.includes('https')) {
-      checkers.push(patchHttps);
+      patchNames.push('https');
+      checkers.push(makeLogEntryChecker('patch', patchNames));
     }
   } else if (!t.agentPresent) {
     //
     // no agent, so http and https are the only patch entries.
     //
     if (t.loadProtos.includes('http') || expressPresent) {
-      checkers.push(patchHttp);
+      patchNames.push('http');
+      checkers.push(makeLogEntryChecker('patch', patchNames));
     }
     if (t.loadProtos.includes('https')) {
-      checkers.push(patchHttps);
+      patchNames.push('https');
+      checkers.push(makeLogEntryChecker('patch', patchNames));
     }
   } else {
     throw new Error(`unexpected agentPresent value: ${t.agentPresent}`);
