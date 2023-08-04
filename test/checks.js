@@ -281,7 +281,7 @@ const checks = {
   waitForLines,
   header: checkHeader,
   patch: checkPatch,
-  metrics: checkMetrics,
+  route: checkMetrics,
   gc: checkGarbageCollection,
   eventloop: checkEventloop,
   proc: checkProc,
