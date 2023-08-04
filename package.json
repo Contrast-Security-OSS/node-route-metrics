@@ -35,7 +35,9 @@
     "shimmer": "^1.2.1"
   },
   "devDependencies": {
-    "@contrast/agent": "^4.19.2",
+    "@contrast/agent": "^4.32.13",
+    "@contrast/protect-agent": "^5.7.0",
+    "@contrast/rasp-v3": "^0.7.0-alpha.2",
     "chai": "^4.3.4",
     "chai-as-promised": "^7.1.1",
     "eslint": "^7.32.0",

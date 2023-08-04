@@ -2,7 +2,7 @@
 
 const Server = require('./skeleton');
 
-const {contrast_agent: agent, contrast_tracker: tracker} = global;
+const {agent, tracker} = Server.getAgentGlobals();
 
 // the app
 const express = require('express');
@@ -47,7 +47,7 @@ echo.post('/meta', function(req, res, next) {
     tracker: !!tracker,
   };
   if (tracker) {
-    response.tracked = !!tracker.getData(s);
+    response.tracked = !!(tracker.getData || tracker.getMetadata)(s);
   }
   res.send(response);
 });

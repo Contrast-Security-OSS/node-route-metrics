@@ -2,7 +2,7 @@
 
 const Server = require('./skeleton');
 
-const {contrast_agent: agent, contrast_tracker: tracker} = global;
+const {agent, tracker} = Server.getAgentGlobals();
 
 function app(req, res) {
   res.statusCode = 200;
@@ -58,7 +58,7 @@ function dispatch(req, res, body) {
         tracker: !!tracker,
       };
       if (tracker) {
-        response.tracked = !!tracker.getData(s);
+        response.tracked = !!(tracker.getData || tracker.getMetadata)(s);
       }
       res.end(JSON.stringify(response));
       return;

@@ -1,9 +1,11 @@
+#!/usr/bin/env node
 'use strict';
 
 const util = require('util');
+const {AGENTS} = require('../lib/patcher');
 
 const defaultEnv = {
-  CONTRAST_DEV: true
+  CONTRAST_DEV: true,
 };
 
 const defaultOptions = {
@@ -37,7 +39,9 @@ function makeTestGenerator(opts) {
   const nodeArgs = {nodeArgs: [
     {desc: 'nothing', args: []},
     {desc: 'route-metrics only', args: ['-r', routeMetrics]},
-    {desc: 'route-metrics + agent', args: ['-r', routeMetrics, '-r', '@contrast/agent']},
+    {desc: 'route-metrics + node agent', args: ['-r', routeMetrics, '-r', '@contrast/agent']},
+    //{desc: 'route-metrics + node mono', args: ['-r', routeMetrics, '-r', '@contrast/protect-agent']},
+    {desc: 'route-metrics + rasp-v3', args: ['-r', routeMetrics, '-r', '@contrast/rasp-v3']},
   ]};
 
   const env = {env: getEnv(defaultEnv)};
@@ -76,7 +80,8 @@ function makeTestGenerator(opts) {
         throw new Error(`loadProtos ${t.loadProtos.join(', ')} doesn't contain ${t.protocol}`);
       }
 
-      t.agentPresent = t.nodeArgs[t.nodeArgs.length - 1] === '@contrast/agent';
+      const ix = AGENTS.indexOf(t.nodeArgs[t.nodeArgs.length - 1]);
+      t.agentPresent = ix >= 0 && AGENTS[ix];
 
       yield t;
     }

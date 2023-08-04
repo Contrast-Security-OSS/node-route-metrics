@@ -85,7 +85,7 @@ describe('server error log tests', function() {
       });
 
       afterEach(function() {
-        if (!process.env.RM_DEBUG_TESTS) {
+        if (this.currentTest.state !== 'failed' || !process.env.RM_DEBUG_TESTS) {
           return;
         }
         const file = fs.readFileSync('route-metrics.log', 'utf8');

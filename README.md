@@ -38,8 +38,9 @@ log file, `route-metrics.log` by default.
 
 Once the `route-metrics` agent has been used to generate a log file, it's
 useful to do something with the output. The included log-processor can be
-executed via `npx --package @contrast/route-metrics log-processor`.
-So to process the default log file, use `npx --package @contrast/route-metrics log-processor route-metrics.log`.
+executed via `npm run log-processor` and will look for the default log file
+in the current directory, `./route-metrics.log`. To specify a different log
+file or location, `npm run log-processor dir/other-file-name.log`.
 
 The log processor will read the log file, output some informational text,
 and use the requested reporter to write the output.
@@ -77,11 +78,11 @@ sampled internally by node; the setting is in milliseconds.
 
 The `route-metrics` log processor is also configured via environment variables.
 
-- `CSI_RM_REPORTER=csv`   # json is also a valid reporter. the json reporter is just a dump of the raw data.
+- `CSI_RM_REPORTER=csv`   # json is also valid. the json reporter is a formatted dump of the raw data.
 - `CSI_RM_OUTPUT=1`       # if numeric writes to that file descriptor, else writes to that file name.
 - `CSI_RM_TEMPLATE`       # a template that defines how the output is grouped
 - `CSI_RM_MICROSECONDS`   # report times in microseconds instead of milliseconds. (json reporter
-always reports raw data, i.e., microseconds.)
+always reports raw data, i.e., microseconds or, in the case of the eventloop delay, nanoseconds.)
 
 ## using a template
 
