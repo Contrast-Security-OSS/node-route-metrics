@@ -321,13 +321,10 @@ function makePatchEntryCheckers(t) {
   // the '-r' or '--request' command line opion. so it is being detected by looking
   // at process.execArgv when the first module in the @contrast scope is loaded.
   if (t.agentPresent === '@contrast/agent') {
-    // http is required first because, even though the node agent is loaded first,
-    // it requires http before it completes loading, and patch events are only emitted
-    // once patching is completed.
     //
-    // also, as of v4.?.? the agent also requires axios, which requires https, so next
-    // there is a patch entry for the contrast node-agent then one for https when axios
-    // eventually requires it.
+    // http and https (since v4.?.? when it started using axios) are always required
+    // by the node agent even if the server doesn't use https.
+    //
     patchNames = ['http', 'https', t.agentPresent];
     checkers.push(makeLogEntryChecker('patch', patchNames));
     checkers.push(makeLogEntryChecker('patch', patchNames));
@@ -335,6 +332,7 @@ function makePatchEntryCheckers(t) {
   } else if (t.agentPresent === '@contrast/rasp-v3') {
     //
     // rasp-v3 does not require either http or https, so it's the first patch entry.
+    // http and https are only required by the server.
     //
     patchNames.push(t.agentPresent);
     checkers.push(makeLogEntryChecker('patch', patchNames));
@@ -347,6 +345,14 @@ function makePatchEntryCheckers(t) {
       patchNames.push('https');
       checkers.push(makeLogEntryChecker('patch', patchNames));
     }
+  } else if (t.agentPresent === '@contrast/protect-agent') {
+    //
+    // protect-agent (node-mono; v5) requires both http and https
+    //
+    patchNames = ['http', 'https', t.agentPresent];
+    checkers.push(makeLogEntryChecker('patch', patchNames));
+    checkers.push(makeLogEntryChecker('patch', patchNames));
+    checkers.push(makeLogEntryChecker('patch', patchNames));
   } else if (!t.agentPresent) {
     //
     // no agent, so http and https are the only patch entries.

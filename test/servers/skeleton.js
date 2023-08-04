@@ -101,6 +101,26 @@ ServerSkeleton.getProtocols = function(args) {
 // helper for getting the the agent-specific global object and components
 //
 ServerSkeleton.getAgentGlobals = function() {
+  let fakeTracker;
+  let fakeAgent;
+  // detect @contrast/protect-agent (node-mono) via this check
+  if (process.execArgv[process.execArgv.length - 1] === '@contrast/protect-agent') {
+    try {
+      const d = require('@contrast/distringuish');
+      fakeAgent = {};
+      fakeTracker = {
+        getData(s) {
+          return d.getProperties(s);
+        },
+        getMetadata(s) {
+          return d.getProperties(s);
+        }
+      };
+    } catch (e) {
+      // ignore
+    }
+  }
+
   const {
     __contrast: raspAgent,
     contrast_agent: nodeAndProtectAgent,
@@ -109,8 +129,8 @@ ServerSkeleton.getAgentGlobals = function() {
 
   const raspTracker = raspAgent?.tracking;
 
-  const agent = raspAgent || nodeAndProtectAgent;
-  const tracker = raspTracker || nodeAndProtectTracker;
+  const agent = raspAgent || nodeAndProtectAgent || fakeAgent;
+  const tracker = raspTracker || nodeAndProtectTracker || fakeTracker;
 
   return {agent, tracker};
 };
