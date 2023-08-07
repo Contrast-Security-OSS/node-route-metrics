@@ -10,6 +10,7 @@
 
 const fs = require('fs');
 const fetch = require('node-fetch');
+const Server = require('../test/servers/server.js');
 
 const asyncPoolSize = process.env.POOL || 10;
 let min = +(process.env.MIN || 40);
@@ -37,6 +38,8 @@ const targets = [
 let verbose = false;
 const args = process.argv.slice(2);
 
+// if the user specifies a server, then start it here.
+let server;
 // routes are specified by the ep without the leading slash
 const requests = [];
 for (let i = 0; i < args.length; i++) {
@@ -44,12 +47,21 @@ for (let i = 0; i < args.length; i++) {
     verbose = true;
     continue;
   }
+  if (args[i] === '-s' || args[i] === '--server') {
+    if (args[i + 1] !== 'express' && args[i + 1] !== 'simple') {
+      // eslint-disable-next-line no-console
+      console.error('server must be express or simple');
+      process.exit(1);
+    }
+    server = args[++i];
+    continue;
+  }
   let t;
   if (t = targets.find(t => t.ep.endsWith(args[i]))) {
     requests.push(Object.assign({}, t));
   } else {
     // eslint-disable-next-line no-console
-    console.log(`${args[i]} not found, skipping`);
+    console.error(`${args[i]} not found, skipping`);
   }
 }
 
@@ -126,8 +138,9 @@ function makeBodyMap() {
   return b;
 }
 
+//
 // async pool executor
-
+//
 function makeAsyncPool(n) {
   const promises = Array(n);
   const freeslots = [...promises.keys()];
@@ -154,11 +167,47 @@ function f2(n) {
   return n.toFixed(2);
 }
 
-main().then(r => {
-  if (!verbose) {
-    return;
+
+start()
+  .then(main)
+  .then(r => {
+    if (!verbose) {
+      return;
+    }
+    r = r.map(r => `${r.method} ${r.ep} mean: ${r.mean}`);
+    // eslint-disable-next-line no-console
+    console.log(r);
+  })
+  .then(stop);
+
+async function start() {
+  if (!server) {
+    // eslint-disable-next-line no-console
+    console.log('no server specified, skipping');
+    return Promise.resolve();
   }
-  r = r.map(r => `${r.method} ${r.ep} mean: ${r.mean}`);
   // eslint-disable-next-line no-console
-  console.log(r);
-});
+  console.log('starting server', server);
+
+  const options = {
+    env: process.env,
+  };
+  // base are the args for the server modules, not an endpoint.
+  const url = new URL(host);
+  // the protocol includes the trailing colon
+  const appArg = [`${url.protocol}${url.hostname}:${url.port}`];
+  const nodeargs = ['-r', '.', './test/servers/express.js', appArg];
+  server = new Server(nodeargs, options);
+  return server.readyPromise;
+}
+
+async function stop() {
+  if (!server) {
+    // eslint-disable-next-line no-console
+    console.log('stopping');
+    return Promise.resolve();
+  }
+  // eslint-disable-next-line no-console
+  console.log('stopping server');
+  return server.stop({type: 'signal', value: 'SIGKILL'});
+}
