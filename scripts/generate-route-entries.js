@@ -13,6 +13,15 @@ const fetch = require('node-fetch');
 const Server = require('../test/servers/server.js');
 
 const asyncPoolSize = process.env.POOL || 10;
+// make the following mutually exclusive with ITERATIONS.
+// TIME_TO_RUN is in seconds.
+let timeToRun = 0;
+if ('TIME_TO_RUN' in process.env) {
+  timeToRun = +process.env.TIME_TO_RUN * 1000;
+}
+
+// calculate these anyway but if timeToRun is truthy, they'll be
+// ignored.
 let min = +(process.env.MIN || 40);
 let max = +(process.env.MAX || 80);
 if (process.env.ITERATIONS) {
@@ -83,6 +92,7 @@ requests.forEach(r => {
   r.totalTime = 0;
 });
 
+let executedCount = 0;
 const bodyMap = makeBodyMap();
 const host = process.env.host || 'http://localhost:8888';
 
@@ -90,6 +100,7 @@ async function main() {
   const done = [];
   const xq = makeAsyncPool(asyncPoolSize);
   const start = Date.now();
+  const endTime = start + timeToRun;
 
   while (requests.length > 0) {
     const ix = Math.floor(Math.random() * requests.length);
@@ -97,11 +108,20 @@ async function main() {
     const req = requests[ix];
     await xq(() => makeRequest(requests[ix])
       .then(r => {
+        executedCount += 1;
         req.totalTime += Date.now() - rStart;
         return r;
       }));
     //console.log('xq', requests[ix].ep);
-    if (--requests[ix].left <= 0) {
+    // when there are no more of a given request left, it is done.
+    // this needs to change for TIME_TO_RUN because we want to keep
+    // going until the time is up.
+    if (timeToRun) {
+      if (Date.now() > endTime) {
+        // should we get counts of each request?
+        requests.length = 0;
+      }
+    } else if (--requests[ix].left <= 0) {
       const d = requests.splice(ix, 1)[0];
       done.push(d);
       d.mean = d.totalTime / d.n;
@@ -109,8 +129,11 @@ async function main() {
   }
   await xq.done();
   const et = Date.now() - start;
-  // eslint-disable-next-line no-console
-  console.log('et (ms)', et, 'ms per request', f2(et / totalCount));
+  const perRequest = et / (timeToRun ? executedCount : totalCount);
+  /* eslint-disable no-console */
+  console.log('executed', executedCount, 'requests in', et, 'ms');
+  console.log('et (ms)', et, 'ms per request', f2(perRequest));
+  /* eslint-enable no-console */
   return done;
 }
 
