@@ -15,9 +15,9 @@ const pdj = require('../test/servers/package.json');
 const tests = makeTestGenerator({});
 
 const metricsEntries = [
-  makeLogEntryChecker('metrics'),
-  makeLogEntryChecker('metrics'),
-  makeLogEntryChecker('metrics'),
+  makeLogEntryChecker('route'),
+  makeLogEntryChecker('route'),
+  makeLogEntryChecker('route'),
 ];
 
 // save these initial values

@@ -2,3 +2,5 @@ node_modules/
 cache/
 *.log
 .nyc_output/
+contrast_effective_config.json
+contrast_system_info.json

@@ -242,7 +242,7 @@ describe('server time-series tests', function() {
         for (const entry of remaining) {
           if (entry.type in tsEntries) {
             tsEntries[entry.type].validator(entry.entry);
-          } else if (entry.type === 'metrics') {
+          } else if (entry.type === 'route') {
             const me = `${entry.entry.method.toLowerCase()}${entry.entry.url}`;
             if (me in metricsEntriesLeft) {
               delete metricsEntriesLeft[me];

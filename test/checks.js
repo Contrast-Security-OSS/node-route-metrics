@@ -281,7 +281,7 @@ const checks = {
   waitForLines,
   header: checkHeader,
   patch: checkPatch,
-  metrics: checkMetrics,
+  route: checkMetrics,
   gc: checkGarbageCollection,
   eventloop: checkEventloop,
   proc: checkProc,
@@ -301,7 +301,6 @@ function makeLogEntryChecker(type, ...args) {
 /**
  * predefined checkers for the three files we patch.
  */
-
 
 //
 // makePatchEntryCheckers() was part of the test generator but that didn't allow
