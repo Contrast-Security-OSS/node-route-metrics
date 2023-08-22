@@ -29,6 +29,22 @@
       "program": "${workspaceFolder}/test/servers/${input:server}"
     },
     {
+      "name": "server[no-agent]",
+      "type": "node",
+      "request": "launch",
+      "skipFiles": [
+        "<node_internals>/**"
+      ],
+      "runtimeArgs": [
+        "-r",
+        "${workspaceFolder}"
+      ],
+      "args": [
+        "http:localhost:8888"
+      ],
+      "program": "${workspaceFolder}/test/servers/${input:server}"
+    },
+    {
       "name": "current file",
       "type": "node",
       "request": "launch",
