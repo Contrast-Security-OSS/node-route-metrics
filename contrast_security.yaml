@@ -1,15 +1,28 @@
 api:
-  url: http://localhost:30080/Contrast
-  api_key: demo
-  service_key: 8JA4IS0DV3K1GEYP
-  user_name: agent_f2b26258-7dec-488f-bfd4-71265d3b699f@ContrastSecurity
-  enable: true
+  enable: false
+
 
 assess:
+  enable: false
+protect:
   enable: true
+  rules:
+    path-traversal:
+      mode: block
+    cmd-injection:
+      mode: block
+    nosql-injection:
+      mode: block
+    sql-injection:
+      mode: block
+    reflected-xss:
+      mode: block
 
 agent:
+  reporters:
+    file: 1
   logger:
+    append: false
     level: debug
     stdout: false
   diagnostics:
