@@ -94,7 +94,7 @@ requests.forEach(r => {
 
 let executedCount = 0;
 const bodyMap = makeBodyMap();
-const host = process.env.host || 'http://localhost:8888';
+const host = process.env.HOST || 'http://localhost:8888';
 
 async function main() {
   const done = [];
@@ -112,13 +112,11 @@ async function main() {
         req.totalTime += Date.now() - rStart;
         return r;
       }));
-    //console.log('xq', requests[ix].ep);
-    // when there are no more of a given request left, it is done.
-    // this needs to change for TIME_TO_RUN because we want to keep
-    // going until the time is up.
+    // if timeToRun was specified, this stops when that time has elapsed.
+    // otherwise, it stops after the specified iterations/requests have
+    // executed.
     if (timeToRun) {
       if (Date.now() > endTime) {
-        // should we get counts of each request?
         requests.length = 0;
       }
     } else if (--requests[ix].left <= 0) {
@@ -167,12 +165,20 @@ function makeBodyMap() {
 function makeAsyncPool(n) {
   const promises = Array(n);
   const freeslots = [...promises.keys()];
-  // execute fn
+  // define the execute fn
   async function xq(fn) {
     if (!freeslots.length) {
       await Promise.race(promises);
     }
+    // take one of the free slots. it's just an index.
     const slot = freeslots.splice(0, 1)[0];
+
+    // promises[slot] is the promise returned by the async
+    // function that is executing in the pool slot. when it's
+    // resolved, it deletes the promise. while the slots are
+    // filling up with unsettled promises, the undefined values
+    // will cause Promise.race() to return immediately (because
+    // non Promise values cause it to resolve immediately).
     promises[slot] = fn()
       .then(r => {
         delete promises[slot];
