@@ -11,6 +11,10 @@ assess:
 agent:
   logger:
     level: debug
+    stdout: false
+  diagnostics:
+    enable: false
+    quiet: true
   service:
     enable: false
     grpc: true

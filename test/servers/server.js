@@ -110,6 +110,11 @@ class Server {
     if (s.startsWith('The Contrast Node Agent collects usage data')) {
       return true;
     }
+    // don't know why the effective config is being output to stderr, but
+    // it is when testing.
+    if (/^\{\n  "report_create": "\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z"/.test(s)) {
+      return true;
+    }
 
     return false;
   }

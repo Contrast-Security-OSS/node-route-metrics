@@ -10,8 +10,18 @@
 
 const fs = require('fs');
 const fetch = require('node-fetch');
+const Server = require('../test/servers/server.js');
 
 const asyncPoolSize = process.env.POOL || 10;
+// make the following mutually exclusive with ITERATIONS.
+// TIME_TO_RUN is in seconds.
+let timeToRun = 0;
+if ('TIME_TO_RUN' in process.env) {
+  timeToRun = +process.env.TIME_TO_RUN * 1000;
+}
+
+// calculate these anyway but if timeToRun is truthy, they'll be
+// ignored.
 let min = +(process.env.MIN || 40);
 let max = +(process.env.MAX || 80);
 if (process.env.ITERATIONS) {
@@ -37,6 +47,8 @@ const targets = [
 let verbose = false;
 const args = process.argv.slice(2);
 
+// if the user specifies a server, then start it here.
+let server;
 // routes are specified by the ep without the leading slash
 const requests = [];
 for (let i = 0; i < args.length; i++) {
@@ -44,12 +56,21 @@ for (let i = 0; i < args.length; i++) {
     verbose = true;
     continue;
   }
+  if (args[i] === '-s' || args[i] === '--server') {
+    if (args[i + 1] !== 'express' && args[i + 1] !== 'simple') {
+      // eslint-disable-next-line no-console
+      console.error('server must be express or simple');
+      process.exit(1);
+    }
+    server = args[++i];
+    continue;
+  }
   let t;
   if (t = targets.find(t => t.ep.endsWith(args[i]))) {
     requests.push(Object.assign({}, t));
   } else {
     // eslint-disable-next-line no-console
-    console.log(`${args[i]} not found, skipping`);
+    console.error(`${args[i]} not found, skipping`);
   }
 }
 
@@ -71,6 +92,7 @@ requests.forEach(r => {
   r.totalTime = 0;
 });
 
+let executedCount = 0;
 const bodyMap = makeBodyMap();
 const host = process.env.host || 'http://localhost:8888';
 
@@ -78,6 +100,7 @@ async function main() {
   const done = [];
   const xq = makeAsyncPool(asyncPoolSize);
   const start = Date.now();
+  const endTime = start + timeToRun;
 
   while (requests.length > 0) {
     const ix = Math.floor(Math.random() * requests.length);
@@ -85,11 +108,20 @@ async function main() {
     const req = requests[ix];
     await xq(() => makeRequest(requests[ix])
       .then(r => {
+        executedCount += 1;
         req.totalTime += Date.now() - rStart;
         return r;
       }));
     //console.log('xq', requests[ix].ep);
-    if (--requests[ix].left <= 0) {
+    // when there are no more of a given request left, it is done.
+    // this needs to change for TIME_TO_RUN because we want to keep
+    // going until the time is up.
+    if (timeToRun) {
+      if (Date.now() > endTime) {
+        // should we get counts of each request?
+        requests.length = 0;
+      }
+    } else if (--requests[ix].left <= 0) {
       const d = requests.splice(ix, 1)[0];
       done.push(d);
       d.mean = d.totalTime / d.n;
@@ -97,8 +129,11 @@ async function main() {
   }
   await xq.done();
   const et = Date.now() - start;
-  // eslint-disable-next-line no-console
-  console.log('et (ms)', et, 'ms per request', f2(et / totalCount));
+  const perRequest = et / (timeToRun ? executedCount : totalCount);
+  /* eslint-disable no-console */
+  console.log('executed', executedCount, 'requests in', et, 'ms');
+  console.log('et (ms)', et, 'ms per request', f2(perRequest));
+  /* eslint-enable no-console */
   return done;
 }
 
@@ -126,8 +161,9 @@ function makeBodyMap() {
   return b;
 }
 
+//
 // async pool executor
-
+//
 function makeAsyncPool(n) {
   const promises = Array(n);
   const freeslots = [...promises.keys()];
@@ -154,11 +190,47 @@ function f2(n) {
   return n.toFixed(2);
 }
 
-main().then(r => {
-  if (!verbose) {
-    return;
+
+start()
+  .then(main)
+  .then(r => {
+    if (!verbose) {
+      return;
+    }
+    r = r.map(r => `${r.method} ${r.ep} mean: ${r.mean}`);
+    // eslint-disable-next-line no-console
+    console.log(r);
+  })
+  .then(stop);
+
+async function start() {
+  if (!server) {
+    // eslint-disable-next-line no-console
+    console.log('no server specified, skipping');
+    return Promise.resolve();
   }
-  r = r.map(r => `${r.method} ${r.ep} mean: ${r.mean}`);
   // eslint-disable-next-line no-console
-  console.log(r);
-});
+  console.log('starting server', server);
+
+  const options = {
+    env: process.env,
+  };
+  // base are the args for the server modules, not an endpoint.
+  const url = new URL(host);
+  // the protocol includes the trailing colon
+  const appArg = [`${url.protocol}${url.hostname}:${url.port}`];
+  const nodeargs = ['-r', '.', './test/servers/express.js', appArg];
+  server = new Server(nodeargs, options);
+  return server.readyPromise;
+}
+
+async function stop() {
+  if (!server) {
+    // eslint-disable-next-line no-console
+    console.log('stopping');
+    return Promise.resolve();
+  }
+  // eslint-disable-next-line no-console
+  console.log('stopping server');
+  return server.stop({type: 'signal', value: 'SIGKILL'});
+}
