@@ -262,8 +262,8 @@ function checkProc(entry, overrides) {
   expect(entry).property('cpuSystemAvg').a('number');
   expect(entry).property('rss').a('number');
   expect(entry).property('heapTotal').a('number');
-  expect(entry).property('heapUsedAvg').a('number');
-  expect(entry).property('externalAvg').a('number');
+  expect(entry).property('heapUsed').a('number');
+  expect(entry).property('external').a('number');
 }
 
 /**

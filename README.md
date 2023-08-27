@@ -113,3 +113,11 @@ only one.
 - does not handle http2 (http/https only)
 - `log-processor` has minimal automated testing; manual testing has revealed no inconsistencies
 or errors.
+
+## breaking changes pending
+
+- changing memory averages to raw data
+  - change names from heapUsedAvg to heapUsed, externalAvg to external
+  - add arrayBuffers
+- get rid of averaging interval. if need be, provide a separate interval for memory
+data.
