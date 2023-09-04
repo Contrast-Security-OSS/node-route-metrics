@@ -23,8 +23,8 @@ protect:
       mode: block
 
 agent:
-  reporters:
-    file: 1
+  #reporters:
+  #  file: 1
   logger:
     append: false
     level: debug
