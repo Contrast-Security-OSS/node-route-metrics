@@ -71,7 +71,6 @@ describe('server time-series tests', function() {
       before(async function() {
         // don't wait so long
         process.env.CSI_ROUTE_METRICS_TIME_SERIES_INTERVAL = 100;
-        process.env.CSI_ROUTE_METRICS_AVERAGING_INTERVAL = 250;
         return fsp.unlink('route-metrics.log')
           .catch(e => null)
           .then(() => {
