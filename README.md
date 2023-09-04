@@ -114,10 +114,12 @@ only one.
 - `log-processor` has minimal automated testing; manual testing has revealed no inconsistencies
 or errors.
 
-## breaking changes pending
+## breaking changes
 
-- changing memory averages to raw data
-  - change names from heapUsedAvg to heapUsed, externalAvg to external
-  - add arrayBuffers
-- get rid of averaging interval. if need be, provide a separate interval for memory
-data.
+v1 => v2
+
+- `proc` entries now report raw data, not averages, for memory. the names have been
+changed to reflect that (`heapUsedAvg` => `heapUsed` and `externalAvg` to `external`).
+- `arrayBuffers` have been added to the `proc` entry.
+- the averaging interval was removed. It was not documented and shouldn't cause any
+issues.
