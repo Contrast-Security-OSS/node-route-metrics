@@ -77,10 +77,8 @@ describe('server response tests', function() {
               expect(result.agent).equal(true, 'agent should be loaded');
               expect(result.tracker).equal(true, 'tracker should be present');
 
-              // not sure this is right, but it appears that @contrast/protect-agent
-              // does not track the input object, so stringify does not result in it
-              // being tracked.
-              const expected = server === 'express' && t.agentPresent !== '@contrast/protect-agent';
+              // only rasp-v3 tracks the object itself. is this correct?
+              const expected = server === 'express' && t.agentPresent === '@contrast/rasp-v3';
               expect(result.tracked).equal(expected, 'the data should be tracked');
             } else {
               expect(result).property('agent').false;
