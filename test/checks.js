@@ -304,6 +304,51 @@ function makeLogEntryChecker(type, ...args) {
 }
 
 /**
+ * make a group of validators that allow the entries to be in any order.
+ * this is similar to the makePatchEntryCheckers(), which can handle the
+ * patches in any order, but is generalized.
+ */
+function makeUnorderedLogEntryChecker(checksToMake) {
+  const validators = {};
+  for (const {type, vArgs: args = []} of checksToMake) {
+    if (!(type in validators)) {
+      validators[type] = [];
+    }
+    const checker = makeLogEntryChecker(type, ...args);
+    validators[type].push(checker);
+  }
+
+  function validator(entry) {
+    const type = entry.type;
+    if (!(type in validators)) {
+      throw new Error(`unexpected type: ${type}`);
+    }
+    entry = entry.entry;
+    const checkers = validators[type];
+    // for now, they have to be in order. that might need to change. if
+    // it does this will need to call a non-exception checker (or maybe
+    // just catch the exception).
+    checkers[0].validator(entry);
+    checkers.shift();
+    if (checkers.length === 0) {
+      // no more checkers for this type
+      delete validators[type];
+      if (Object.keys(validators).length === 0) {
+        // no more checkers for any type
+        return true;
+      }
+    }
+  }
+  validator.show = () => {return {type: 'unordered', checksToMake}};
+
+  const unorderedValidators = [];
+  for (let i = 0; i < checksToMake.length; i++) {
+    unorderedValidators.push({validator, type: Object.keys(validators)});
+  }
+  return unorderedValidators;
+}
+
+/**
  * predefined checkers for the three files we patch.
  */
 
@@ -405,6 +450,7 @@ function makeMetricsChecker(method, pathEnd) {
 module.exports = {
   checks,
   makeLogEntryChecker,
+  makeUnorderedLogEntryChecker,
   makePatchEntryCheckers,
   makeMetricsChecker,
   makeTimeSeriesCheckers,
