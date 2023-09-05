@@ -169,8 +169,9 @@ function checkHeader(header, pdj, overrides) {
     GARBAGE_COLLECTION: false,
   };
 
-  // always set this because a test might change it.
+  // always set these because a test might change them.
   expected.argv = process.argv;
+  expected.execArgv = process.execArgv;
 
   if (overrides) {
     if (typeof overrides === 'function') {
@@ -182,7 +183,11 @@ function checkHeader(header, pdj, overrides) {
         throw new Error(`override specifies invalid key ${key}`);
       }
       if (typeof expected[key] === 'object') {
-        Object.assign(expected[key], obj);
+        if (!Array.isArray(expected[key])) {
+          Object.assign(expected[key], obj);
+        } else {
+          expected[key] = obj;
+        }
       } else {
         expected[key] = obj;
       }

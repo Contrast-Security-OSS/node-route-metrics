@@ -8,7 +8,11 @@ const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
 const {makeTestGenerator} = require('../test/helpers');
-const {checks, makeLogEntryChecker, makePatchEntryCheckers} = require('../test/checks');
+const {
+  checks,
+  makeLogEntryChecker,
+  makePatchEntryCheckers,
+} = require('../test/checks');
 
 const pdj = require('../test/servers/package.json');
 
@@ -80,7 +84,8 @@ describe('server log tests', function() {
       beforeEach(function() {
         // build the array of expected log entries. these need to be done
         // each test because a patch entry is removed after it's been checked.
-        logEntries = [makeLogEntryChecker('header', pdj)];
+        const overrides = {execArgv: t.nodeArgs};
+        logEntries = [makeLogEntryChecker('header', pdj, overrides)];
         patchEntries = makePatchEntryCheckers(t);
         logEntries.push(...patchEntries);
         logEntries.push(...metricsEntries);
@@ -145,7 +150,11 @@ describe('server log tests', function() {
         for (let i = 0; i < logEntries.length; i++) {
           expect(logEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
           const {validator} = logEntries[i];
-          expect(logObjects[i]).property('type').equal(logEntries[i].type);
+          if (Array.isArray(logEntries[i].types)) {
+            expect(logObjects[i]).property('type').oneOf(logEntries[i].types);
+          } else {
+            expect(logObjects[i]).property('type').equal(logEntries[i].type);
+          }
           validator(logObjects[i].entry);
         }
       });
