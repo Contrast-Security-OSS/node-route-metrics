@@ -169,8 +169,9 @@ function checkHeader(header, pdj, overrides) {
     GARBAGE_COLLECTION: false,
   };
 
-  // always set this because a test might change it.
+  // always set these because a test might change them.
   expected.argv = process.argv;
+  expected.execArgv = process.execArgv;
 
   if (overrides) {
     if (typeof overrides === 'function') {
@@ -182,7 +183,11 @@ function checkHeader(header, pdj, overrides) {
         throw new Error(`override specifies invalid key ${key}`);
       }
       if (typeof expected[key] === 'object') {
-        Object.assign(expected[key], obj);
+        if (!Array.isArray(expected[key])) {
+          Object.assign(expected[key], obj);
+        } else {
+          expected[key] = obj;
+        }
       } else {
         expected[key] = obj;
       }
@@ -262,8 +267,8 @@ function checkProc(entry, overrides) {
   expect(entry).property('cpuSystemAvg').a('number');
   expect(entry).property('rss').a('number');
   expect(entry).property('heapTotal').a('number');
-  expect(entry).property('heapUsedAvg').a('number');
-  expect(entry).property('externalAvg').a('number');
+  expect(entry).property('heapUsed').a('number');
+  expect(entry).property('external').a('number');
 }
 
 /**
@@ -296,6 +301,51 @@ function makeLogEntryChecker(type, ...args) {
   const validator = (entry) => checks[type](entry, ...args);
   validator.show = () => {return {type, args: [...args]}};
   return {type, validator};
+}
+
+/**
+ * make a group of validators that allow the entries to be in any order.
+ * this is similar to the makePatchEntryCheckers(), which can handle the
+ * patches in any order, but is generalized.
+ */
+function makeUnorderedLogEntryChecker(checksToMake) {
+  const validators = {};
+  for (const {type, vArgs: args = []} of checksToMake) {
+    if (!(type in validators)) {
+      validators[type] = [];
+    }
+    const checker = makeLogEntryChecker(type, ...args);
+    validators[type].push(checker);
+  }
+
+  function validator(entry) {
+    const type = entry.type;
+    if (!(type in validators)) {
+      throw new Error(`unexpected type: ${type}`);
+    }
+    entry = entry.entry;
+    const checkers = validators[type];
+    // for now, they have to be in order. that might need to change. if
+    // it does this will need to call a non-exception checker (or maybe
+    // just catch the exception).
+    checkers[0].validator(entry);
+    checkers.shift();
+    if (checkers.length === 0) {
+      // no more checkers for this type
+      delete validators[type];
+      if (Object.keys(validators).length === 0) {
+        // no more checkers for any type
+        return true;
+      }
+    }
+  }
+  validator.show = () => {return {type: 'unordered', checksToMake}};
+
+  const unorderedValidators = [];
+  for (let i = 0; i < checksToMake.length; i++) {
+    unorderedValidators.push({validator, type: Object.keys(validators)});
+  }
+  return unorderedValidators;
 }
 
 /**
@@ -400,6 +450,7 @@ function makeMetricsChecker(method, pathEnd) {
 module.exports = {
   checks,
   makeLogEntryChecker,
+  makeUnorderedLogEntryChecker,
   makePatchEntryCheckers,
   makeMetricsChecker,
   makeTimeSeriesCheckers,

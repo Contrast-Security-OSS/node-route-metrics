@@ -8,17 +8,16 @@ const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
 const {makeTestGenerator} = require('../test/helpers');
-const {checks, makeLogEntryChecker, makePatchEntryCheckers} = require('../test/checks');
+const {
+  checks,
+  makeLogEntryChecker,
+  makePatchEntryCheckers,
+  makeUnorderedLogEntryChecker,
+} = require('../test/checks');
 
 const pdj = require('../test/servers/package.json');
 
 const tests = makeTestGenerator({});
-
-const metricsEntries = [
-  makeLogEntryChecker('route'),
-  makeLogEntryChecker('route'),
-  makeLogEntryChecker('route'),
-];
 
 // save these initial values
 const previousTLS = !!process.env.NODE_TLS_REJECT_UNAUTHORIZED;
@@ -30,7 +29,7 @@ describe('server log tests', function() {
   //
   for (const t of tests()) {
     let testServer;
-    let logEntries;
+    let expectedEntries;
     let patchEntries;
 
     const {server, base, desc, nodeArgs, appArgs} = t;
@@ -80,10 +79,20 @@ describe('server log tests', function() {
       beforeEach(function() {
         // build the array of expected log entries. these need to be done
         // each test because a patch entry is removed after it's been checked.
-        logEntries = [makeLogEntryChecker('header', pdj)];
+        const overrides = {execArgv: t.nodeArgs};
+        expectedEntries = [makeLogEntryChecker('header', pdj, overrides)];
         patchEntries = makePatchEntryCheckers(t);
-        logEntries.push(...patchEntries);
-        logEntries.push(...metricsEntries);
+        expectedEntries.push(...patchEntries);
+
+        const unorderedEntries = [
+          ...makeUnorderedLogEntryChecker([
+            {type: 'route'},
+            {type: 'route'},
+            {type: 'route'},
+            {type: 'proc'},
+          ])
+        ];
+        expectedEntries.push(...unorderedEntries);
       });
 
       afterEach(function() {
@@ -92,7 +101,7 @@ describe('server log tests', function() {
           /* eslint-disable no-console */
           console.log('new Server(', lastArgs, ')');
           console.log('last logLines', lastLogLines);
-          console.log('last logEntries', logEntries.map(e => e.validator.show()));
+          console.log('last logEntries', expectedEntries.map(e => e.validator.show()));
           /* eslint-enable no-console */
         }
       });
@@ -101,7 +110,7 @@ describe('server log tests', function() {
       // the tests start here
       //
       it('header and patch entries are present after startup', async function() {
-        const subset = logEntries.filter(e => {
+        const subset = expectedEntries.filter(e => {
           return e.type === 'header' || e.type === 'patch';
         });
 
@@ -133,7 +142,7 @@ describe('server log tests', function() {
         const typesNeeded = {
           header: 1,
           patch: patchEntries.length,
-          metrics: 3,
+          route: 3,
         };
         const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
         lastLogLines = logLines;
@@ -142,11 +151,23 @@ describe('server log tests', function() {
         expect(logLines.length).gte(linesNeeded, 'not enough lines');
         const logObjects = logLines.map(line => JSON.parse(line));
 
-        for (let i = 0; i < logEntries.length; i++) {
-          expect(logEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
-          const {validator} = logEntries[i];
-          expect(logObjects[i]).property('type').equal(logEntries[i].type);
-          validator(logObjects[i].entry);
+        for (let i = 0; i < expectedEntries.length; i++) {
+          // if we've gotten through lines needed, that's good enough. unorderedLogEntries
+          // can have extra entries.
+          if (i >= linesNeeded) {
+            break;
+          }
+
+          expect(expectedEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
+          const {validator} = expectedEntries[i];
+          if (Array.isArray(expectedEntries[i].type)) {
+            expect(logObjects[i]).property('type').oneOf(expectedEntries[i].type);
+            validator(logObjects[i]);
+          } else {
+            expect(logObjects[i]).property('type').equal(expectedEntries[i].type);
+            validator(logObjects[i].entry);
+          }
+
         }
       });
 
@@ -171,11 +192,22 @@ describe('server log tests', function() {
         expect(logLines.length).gte(linesNeeded, 'not enough lines');
         const logObjects = logLines.map(line => JSON.parse(line));
 
-        for (let i = 0; i < logEntries.length; i++) {
-          expect(logEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
-          const {validator} = logEntries[i];
-          expect(logObjects[i]).property('type').equal(logEntries[i].type);
-          validator(logObjects[i].entry);
+        for (let i = 0; i < expectedEntries.length; i++) {
+          // if we've gotten through lines needed, that's good enough. unorderedLogEntries
+          // can have extra entries.
+          if (i >= linesNeeded) {
+            break;
+          }
+
+          expect(expectedEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
+          const {validator} = expectedEntries[i];
+          if (Array.isArray(expectedEntries[i].type)) {
+            expect(logObjects[i]).property('type').oneOf(expectedEntries[i].type);
+            validator(logObjects[i]);
+          } else {
+            expect(logObjects[i]).property('type').equal(expectedEntries[i].type);
+            validator(logObjects[i].entry);
+          }
         }
       });
     });

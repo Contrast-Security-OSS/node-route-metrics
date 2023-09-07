@@ -1,13 +1,14 @@
 {
   "name": "@contrast/route-metrics",
-  "version": "2.0.0-alpha",
+  "version": "2.0.0-alpha.1",
   "description": "",
   "main": "lib/index.js",
   "bin": {
     "log-processor": "./lib/log-processor/index.js"
   },
   "files": [
-    "lib/**",
+    "lib/**/*.js",
+    "!lib/**/*.test.js",
     "example/template.js"
   ],
   "scripts": {

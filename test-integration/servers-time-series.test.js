@@ -56,7 +56,7 @@ describe('server time-series tests', function() {
       config: {
         GARBAGE_COLLECTION: !!t.env.CSI_RM_GARBAGE_COLLECTION,
         EVENTLOOP: !!t.env.CSI_RM_EVENTLOOP,
-      }
+      },
     };
 
     const {server, base, desc, nodeArgs, appArgs} = t;
@@ -71,7 +71,6 @@ describe('server time-series tests', function() {
       before(async function() {
         // don't wait so long
         process.env.CSI_ROUTE_METRICS_TIME_SERIES_INTERVAL = 100;
-        process.env.CSI_ROUTE_METRICS_AVERAGING_INTERVAL = 250;
         return fsp.unlink('route-metrics.log')
           .catch(e => null)
           .then(() => {
@@ -113,7 +112,8 @@ describe('server time-series tests', function() {
         // still works but should be replaced by explicit construction of the
         // expected log entries.
         expectedLogEntries.length = 0;
-        expectedLogEntries.push(makeLogEntryChecker('header', pdj, overrides));
+        const o = Object.assign({execArgv: t.nodeArgs}, overrides);
+        expectedLogEntries.push(makeLogEntryChecker('header', pdj, o));
         expectedLogEntries.push(...makePatchEntryCheckers(t));
       });
 

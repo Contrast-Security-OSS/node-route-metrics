@@ -101,36 +101,32 @@ ServerSkeleton.getProtocols = function(args) {
 // helper for getting the the agent-specific global object and components
 //
 ServerSkeleton.getAgentGlobals = function() {
-  let fakeTracker;
-  let fakeAgent;
-  // detect @contrast/protect-agent (node-mono) via this check
-  if (process.execArgv[process.execArgv.length - 1] === '@contrast/protect-agent') {
-    try {
-      const d = require('@contrast/distringuish');
-      fakeAgent = {};
-      fakeTracker = {
-        getData(s) {
-          return d.getProperties(s);
-        },
-        getMetadata(s) {
-          return d.getProperties(s);
-        }
-      };
-    } catch (e) {
-      // ignore
-    }
+  //let fakeTracker;
+  //let fakeAgent;
+
+  let agent;
+  let tracker;
+
+  const cmdLineAgent = process.execArgv.at(-1);
+
+  if (cmdLineAgent === '@contrast/protect-agent') {
+    const d = require('@contrast/distringuish');
+    agent = {};
+    tracker = {
+      getData(s) {
+        return d.getProperties(s);
+      },
+      getMetadata(s) {
+        return d.getProperties(s);
+      }
+    };
+  } else if (cmdLineAgent === '@contrast/agent') {
+    agent = global.contrast_agent;
+    tracker = global.contrast_tracker;
+  } else if (cmdLineAgent === '@contrast/rasp-v3') {
+    agent = global.__contrast;
+    tracker = agent?.tracking;
   }
-
-  const {
-    __contrast: raspAgent,
-    contrast_agent: nodeAndProtectAgent,
-    contrast_tracker: nodeAndProtectTracker
-  } = global;
-
-  const raspTracker = raspAgent?.tracking;
-
-  const agent = raspAgent || nodeAndProtectAgent || fakeAgent;
-  const tracker = raspTracker || nodeAndProtectTracker || fakeTracker;
 
   return {agent, tracker};
 };

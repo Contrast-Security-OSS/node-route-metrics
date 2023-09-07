@@ -17,7 +17,7 @@ class Server {
       this.cp.on('error', reject);
       this.cp.on('exit', (...args) => this.exitHandler(...args));
       this.havePid = false;
-      this.cp.stdout.on('data', function(d) {
+      this.cp.stdout.on('data', d => {
         const s = d.toString();
         if (this.havePid) {
           // this helps debug if there is a console log buried somewhere
@@ -41,6 +41,9 @@ class Server {
         const s = d.toString();
         // let's not see this over and over
         if (s.includes('Warning: Setting the NODE_TLS_REJECT_UNAUTHORIZED environment variable to \'0\'')) {
+          return;
+        }
+        if (s.startsWith('Debugger attached')) {
           return;
         }
         // this helps debug if the servers have an error.

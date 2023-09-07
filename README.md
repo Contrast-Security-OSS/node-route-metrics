@@ -113,3 +113,13 @@ only one.
 - does not handle http2 (http/https only)
 - `log-processor` has minimal automated testing; manual testing has revealed no inconsistencies
 or errors.
+
+## breaking changes
+
+v1 => v2
+
+- `proc` entries now report raw data, not averages, for memory. the names have been
+changed to reflect that (`heapUsedAvg` => `heapUsed` and `externalAvg` to `external`).
+- `arrayBuffers` have been added to the `proc` entry.
+- the averaging interval was removed. It was not documented and shouldn't cause any
+issues.

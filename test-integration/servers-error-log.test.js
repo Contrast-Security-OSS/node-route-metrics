@@ -37,7 +37,8 @@ describe('server error log tests', function() {
     const env = Object.assign({}, process.env, t.env);
 
     // build the array of expected log entries.
-    const logEntries = [makeLogEntryChecker('header', pdj)];
+    const overrides = {execArgv: t.nodeArgs};
+    const logEntries = [makeLogEntryChecker('header', pdj, overrides)];
     logEntries.push(makeLogEntryChecker('unknown-config-items'));
     const patchEntries = makePatchEntryCheckers(t);
     logEntries.push(...patchEntries);
