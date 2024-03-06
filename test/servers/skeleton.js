@@ -121,8 +121,9 @@ ServerSkeleton.getAgentGlobals = function() {
       }
     };
   } else if (cmdLineAgent === '@contrast/agent') {
-    agent = global.contrast_agent;
-    tracker = global.contrast_tracker;
+    const core = global[Symbol.for('contrast:core')];
+    agent = core;
+    tracker = core?.assess?.dataflow?.tracker;
   } else if (cmdLineAgent === '@contrast/rasp-v3') {
     agent = global.__contrast;
     tracker = agent?.tracking;
