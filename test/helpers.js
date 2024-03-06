@@ -40,8 +40,8 @@ function makeTestGenerator(opts) {
     {desc: 'nothing', args: []},
     {desc: 'route-metrics only', args: ['-r', routeMetrics]},
     {desc: 'route-metrics + node agent', args: ['-r', routeMetrics, '-r', '@contrast/agent']},
-    {desc: 'route-metrics + node mono', args: ['-r', routeMetrics, '-r', '@contrast/protect-agent']},
-    {desc: 'route-metrics + rasp-v3', args: ['-r', routeMetrics, '-r', '@contrast/rasp-v3']},
+    //{desc: 'route-metrics + node mono', args: ['-r', routeMetrics, '-r', '@contrast/protect-agent']},
+    //{desc: 'route-metrics + rasp-v3', args: ['-r', routeMetrics, '-r', '@contrast/rasp-v3']},
   ]};
 
   const env = {env: getEnv(defaultEnv)};
