@@ -6,6 +6,7 @@ const {AGENTS} = require('../lib/patcher');
 
 const defaultEnv = {
   CONTRAST_DEV: true,
+  CSI_EXPOSE_CORE: true,
 };
 
 const defaultOptions = {
