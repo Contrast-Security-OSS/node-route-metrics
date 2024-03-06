@@ -2,6 +2,7 @@
 
 const fsp = require('fs').promises;
 const os = require('os');
+const util = require('util');
 const {expect} = require('chai');
 
 /**
@@ -309,6 +310,7 @@ function makeLogEntryChecker(type, ...args) {
  * patches in any order, but is generalized.
  */
 function makeUnorderedLogEntryChecker(checksToMake) {
+  const remainingValidators = new Set();
   const validators = {};
   for (const {type, vArgs: args = []} of checksToMake) {
     if (!(type in validators)) {
@@ -316,24 +318,27 @@ function makeUnorderedLogEntryChecker(checksToMake) {
     }
     const checker = makeLogEntryChecker(type, ...args);
     validators[type].push(checker);
+    remainingValidators.add(type);
   }
 
   function validator(entry) {
     const type = entry.type;
     if (!(type in validators)) {
-      throw new Error(`unexpected type: ${type}`);
+      throw new Error(`unexpected type: ${util.format(entry)}`);
     }
     entry = entry.entry;
     const checkers = validators[type];
     // for now, they have to be in order. that might need to change. if
     // it does this will need to call a non-exception checker (or maybe
     // just catch the exception).
-    checkers[0].validator(entry);
-    checkers.shift();
+    if (checkers.length) {
+      checkers[0].validator(entry);
+      checkers.shift();
+    }
     if (checkers.length === 0) {
       // no more checkers for this type
-      delete validators[type];
-      if (Object.keys(validators).length === 0) {
+      remainingValidators.delete(type);
+      if (remainingValidators.size === 0) {
         // no more checkers for any type
         return true;
       }
