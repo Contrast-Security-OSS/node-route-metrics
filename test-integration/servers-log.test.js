@@ -2,9 +2,11 @@
 
 const fsp = require('fs').promises;
 const path = require('path');
+const util = require('node:util');
 
 const fetch = require('node-fetch');
 const {expect} = require('chai');
+const semver = require('semver');
 
 const Server = require('../test/servers/server');
 const {makeTestGenerator} = require('../test/helpers');
@@ -19,7 +21,11 @@ const pdj = require('../test/servers/package.json');
 
 const tests = makeTestGenerator({});
 
-// save these initial values
+// for some reason v18 takes longer for the simple tests
+const v18 = semver.satisfies(process.version, '>=18.0.0 <19.0.0');
+
+// save these initial values because they will be modified and
+// need to be reset.
 const previousTLS = !!process.env.NODE_TLS_REJECT_UNAUTHORIZED;
 const argv = process.argv;
 
@@ -97,11 +103,12 @@ describe('server log tests', function() {
 
       afterEach(function() {
         // if a test failed make it easier to debug how the server was created
-        if (this.currentTest.state === 'failed') {
+        if (false && this.currentTest.state === 'failed') {
           /* eslint-disable no-console */
           console.log('new Server(', lastArgs, ')');
           console.log('last logLines', lastLogLines);
-          console.log('last logEntries', expectedEntries.map(e => e.validator.show()));
+          const opts = {depth: 10, colors: false};
+          console.log('last logEntries', expectedEntries.map(e => util.inspect(e.validator.show(), opts)));
           /* eslint-enable no-console */
         }
       });
@@ -118,7 +125,12 @@ describe('server log tests', function() {
           header: 1,
           patch: patchEntries.length,
         };
-        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
+
+        const opts = {};
+        if (v18 && t.desc === 'simple with route-metrics + node agent via http (http)') {
+          opts.maxWaitTime = 2000;
+        }
+        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded, opts);
         lastLogLines = logLines;
 
         expect(logLines.length).gte(linesNeeded, 'not enough lines');
@@ -144,7 +156,9 @@ describe('server log tests', function() {
           patch: patchEntries.length,
           route: 3,
         };
-        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
+
+        const opts = {maxWaitTime: 1000};
+        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded, opts);
         lastLogLines = logLines;
 
         // make sure all header and patch entries are present

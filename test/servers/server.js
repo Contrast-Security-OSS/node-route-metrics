@@ -34,6 +34,7 @@ class Server {
           if (Server.isAgentStartupNoise(s)) {
             return;
           }
+
           reject(new Error(`unexpected output "${s.slice(0, -1)}"`));
         }
       });

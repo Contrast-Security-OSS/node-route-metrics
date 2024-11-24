@@ -17,6 +17,12 @@ const defaultOptions = {
   basePort: 8888,
 };
 
+let loader = '--import';
+const nodeVersion = process.versions.node.split('.');
+if (nodeVersion[0] < 18 || (nodeVersion[0] == 18 && nodeVersion[1] < 19)) {
+  loader = '-r';
+}
+
 //
 // makeTestGenerator() returns a generator function that returns tests
 // for all combinations of server (simple, express), protocols (server:
@@ -39,8 +45,8 @@ function makeTestGenerator(opts) {
 
   const nodeArgs = {nodeArgs: [
     {desc: 'nothing', args: []},
-    {desc: 'route-metrics only', args: ['-r', routeMetrics]},
-    {desc: 'route-metrics + node agent', args: ['-r', routeMetrics, '-r', '@contrast/agent']},
+    {desc: 'route-metrics only', args: [loader, routeMetrics]},
+    {desc: 'route-metrics + node agent', args: [loader, routeMetrics, loader, '@contrast/agent']},
     //{desc: 'route-metrics + node mono', args: ['-r', routeMetrics, '-r', '@contrast/protect-agent']},
     //{desc: 'route-metrics + rasp-v3', args: ['-r', routeMetrics, '-r', '@contrast/rasp-v3']},
   ]};

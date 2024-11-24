@@ -3,8 +3,12 @@
 const fsp = require('fs').promises;
 const os = require('os');
 const util = require('util');
+
+const semver = require('semver');
 const {expect} = require('chai');
 
+const nodeIsGreaterThanV20 = semver.satisfies(process.version, '>=20.0.0');
+const nodeIsLessThanV18dot19 = semver.satisfies(process.version, '<18.19.0');
 /**
  * waitForLines() will wait for either a specific number of lines or for specified
  * lines to appear in the log file. the original implementation was for a number
@@ -380,10 +384,26 @@ function makePatchEntryCheckers(t) {
     // http and https (since v4.?.? when it started using axios) are always required
     // by the node agent even if the server doesn't use https.
     //
-    patchNames = ['http', 'https', t.agentPresent];
-    checkers.push(makeLogEntryChecker('patch', patchNames));
-    checkers.push(makeLogEntryChecker('patch', patchNames));
-    checkers.push(makeLogEntryChecker('patch', patchNames));
+    patchNames = ['http'];
+    // for some reason we do not see get a chance to patch https when the agent
+    // is loaded by node v18.19.0 up to 20.0.0. i think this is because the
+    // tests run with route-metrics and the agent loaded using --import. there
+    // is no fix for this short of updating route-metrics with esm support.
+    //
+    // perversely, even if https is not specified, it gets loaded by axios
+    // which @contrast/agent uses, so it's always present when the agent is.
+    if (!t.loadProtos.includes('https')) {
+      if (nodeIsGreaterThanV20 || nodeIsLessThanV18dot19) {
+        patchNames.push('https');
+      }
+    } else {
+      patchNames.push('https');
+    }
+
+    patchNames.push(t.agentPresent);
+    for (let i = 0; i < patchNames.length; i++) {
+      checkers.push(makeLogEntryChecker('patch', patchNames));
+    }
   } else if (t.agentPresent === '@contrast/rasp-v3') {
     //
     // rasp-v3 does not require either http or https, so it's the first patch entry.
