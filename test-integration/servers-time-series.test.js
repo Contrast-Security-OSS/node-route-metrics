@@ -10,19 +10,20 @@
 
 const fsp = require('fs').promises;
 const path = require('path');
+const util = require('node:util');
 
 const fetch = require('node-fetch');
 const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
 const {makeTestGenerator} = require('../test/helpers');
+const {waitForLogLines} = require('../test/wait-for-log-lines');
 const {
-  checks,
   makeLogEntryChecker,
   makeMetricsChecker,
   makePatchEntryCheckers,
   makeTimeSeriesCheckers,
-} = require('../test/checks');
+} = require('../test/checks1');
 
 const pdj = require('../test/servers/package.json');
 
@@ -65,6 +66,7 @@ describe('server time-series tests', function() {
     describe(desc, function() {
       this.timeout(10000);
       let lastArgs;
+      let lastLogLines;
       //
       // start the server
       //
@@ -118,10 +120,15 @@ describe('server time-series tests', function() {
       });
 
       afterEach(function() {
+        const debugging = true;
         // if a test failed make it easier to debug how the server was created
-        if (this.currentTest.state === 'failed' && debugging) {
-          // eslint-disable-next-line no-console
+        if (debugging && this.currentTest.state === 'failed') {
+          /* eslint-disable no-console */
           console.log('new Server(', lastArgs, ')');
+          console.log('last logLines', lastLogLines.slice(1)); // remove the heade line
+          const opts = {depth: 10, colors: false};
+          console.log('last logEntries', expectedLogEntries.map(e => util.inspect(e.validator.show(), opts)));
+          /* eslint-enable no-console */
         }
       });
 
@@ -141,7 +148,8 @@ describe('server time-series tests', function() {
         const linesNeeded = expectedLogEntries.length + timeSeriesEntries.length;
 
         const options = {maxWaitTime: 10000};
-        const {lines: logLines} = await checks.waitForLines(typesNeeded, options);
+        const {lines: logLines} = await waitForLogLines(typesNeeded, options);
+        lastLogLines = logLines;
 
         if (debugging && logLines.length < linesNeeded) {
           // eslint-disable-next-line no-console
@@ -204,7 +212,8 @@ describe('server time-series tests', function() {
         };
 
         const options = {maxWaitTime: 3500};
-        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded, options);
+        const {lines: logLines, linesNeeded} = await waitForLogLines(typesNeeded, options);
+        lastLogLines = logLines;
 
         if (debugging && logLines.length < linesNeeded) {
           // eslint-disable-next-line no-console

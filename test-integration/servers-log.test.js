@@ -4,7 +4,6 @@ const fsp = require('fs').promises;
 const path = require('path');
 const util = require('node:util');
 
-const fetch = require('node-fetch');
 const {expect} = require('chai');
 const semver = require('semver');
 
@@ -15,9 +14,8 @@ const {
   Checkers,
   HeaderChecker,
   PatchChecker,
-  getMinimalPatchEntries,
   RouteChecker,
-} = require('../test/checks2');
+} = require('./checks');
 
 const pdj = require('../test/servers/package.json');
 
@@ -85,28 +83,10 @@ describe('server log tests', function() {
       });
 
       beforeEach(function() {
-        // build the array of expected log entries. these need to be done
-        // each test because a patch entry is removed after it's been checked.
-        /*
-        const overrides = {execArgv: t.nodeArgs};
-        expectedEntries = [makeLogEntryChecker('header', pdj, overrides)];
-        patchEntries = makePatchEntryCheckers(t);
-        expectedEntries.push(...patchEntries);
-
-        const unorderedEntries = [
-          ...makeUnorderedLogEntryChecker([
-            {type: 'route'},
-            {type: 'route'},
-            {type: 'route'},
-            {type: 'proc'},
-          ])
-        ];
-
-        expectedEntries.push(...unorderedEntries);
-        // */
         const overrides = {execArgv: t.nodeArgs};
         const requiredPatches = PatchChecker.getMinimalPatchEntries(t);
 
+        // all tests check for the header and patch entries
         const initialCheckers = [
           {CheckerClass: HeaderChecker, constructorArgs: [pdj, overrides]},
           {CheckerClass: PatchChecker, constructorArgs: [{requiredPatches}]},
@@ -146,15 +126,12 @@ describe('server log tests', function() {
       it('post and get entries are present', async function() {
         const obj = {cat: 'tuna', dog: 'beef', snake: 'mouse'};
 
-        await post(`${base}/echo`, obj);
-        await post(`${base}/meta`, obj);
-        await get(`${base}/info`);
+        await testServer.post(`${base}/echo`, obj);
+        await testServer.post(`${base}/meta`, obj);
+        await testServer.get(`${base}/info`);
 
-        // const typesNeeded = {
-        //   header: 1,
-        //   patch: patchEntries.length,
-        //   route: 3,
-        // };
+        // check that three routes are present. should change to specify routes
+        // or route patterns and count?
         const routeChecker = new RouteChecker({routesExpected: 3});
         checkers.add(routeChecker);
 
@@ -167,32 +144,10 @@ describe('server log tests', function() {
 
         checkers.check(logObjects);
         expect(routeChecker.getRouteEntryCount()).equal(3);
-
-        return;
-
-        for (let i = 0; i < expectedEntries.length; i++) {
-          // if we've gotten through lines needed, that's good enough. unorderedLogEntries
-          // can have extra entries.
-          if (i >= numberOfLinesNeeded) {
-            break;
-          }
-
-          expect(expectedEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
-          const {validator} = expectedEntries[i];
-          if (Array.isArray(expectedEntries[i].type)) {
-            expect(logObjects[i]).property('type').oneOf(expectedEntries[i].type);
-            validator(logObjects[i]);
-          } else {
-            expect(logObjects[i]).property('type').equal(expectedEntries[i].type);
-            validator(logObjects[i].entry);
-          }
-
-        }
       });
 
       it('do not write a record if end() is not called', async function() {
-
-        await post(`${base}/stop/0`, {})
+        await testServer.post(`${base}/stop/0`, {})
           .then(() => {
             throw new Error('the server should not return a response');
           })
@@ -200,10 +155,6 @@ describe('server log tests', function() {
             expect(e.code).equal('ECONNRESET');
           });
 
-        // const typesNeeded = {
-        //   header: 1,
-        //   patch: patchEntries.length,
-        // };
         const {lines, numberOfLinesNeeded} = await checkers.waitForLogLines();
         lastLogLines = lines;
 
@@ -211,55 +162,7 @@ describe('server log tests', function() {
         const logObjects = lines.map(line => JSON.parse(line));
 
         checkers.check(logObjects);
-        return;
-
-        for (let i = 0; i < expectedEntries.length; i++) {
-          // if we've gotten through lines needed, that's good enough. unorderedLogEntries
-          // can have extra entries.
-          if (i >= numberOfLinesNeeded) {
-            break;
-          }
-
-          expect(expectedEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
-          const {validator} = expectedEntries[i];
-          if (Array.isArray(expectedEntries[i].type)) {
-            expect(logObjects[i]).property('type').oneOf(expectedEntries[i].type);
-            validator(logObjects[i]);
-          } else {
-            expect(logObjects[i]).property('type').equal(expectedEntries[i].type);
-            validator(logObjects[i].entry);
-          }
-        }
       });
     });
   }
 });
-
-async function post(url, obj) {
-  const options = {
-    method: 'post',
-    body: JSON.stringify(obj),
-    headers: {'content-type': 'application/json'}
-  };
-  return fetch(url, options)
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(res.statusText);
-      }
-      return res;
-    })
-    .then(res => res.json());
-}
-
-async function get(url) {
-  const options = {
-    method: 'get'
-  };
-  return fetch(url, options)
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(`${res.status} ${res.statusText}`);
-      }
-      return res;
-    });
-}

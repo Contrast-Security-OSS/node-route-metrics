@@ -1,6 +1,7 @@
 'use strict';
 
 const child_process = require('child_process');
+const fetch = require('node-fetch');
 
 class Server {
   constructor(args, options = {}) {
@@ -67,7 +68,7 @@ class Server {
     if (typeof this.exitCode !== 'number') {
       // if the type is an url then post to that url.
       if (type === 'url') {
-        post(value, {});
+        this.post(value, {});
       } else if (type === 'signal') {
         this.cp.kill(value);
       }
@@ -123,26 +124,35 @@ class Server {
     return false;
   }
 
+  async post(url, obj) {
+    const options = {
+      method: 'post',
+      body: JSON.stringify(obj),
+      headers: {'content-type': 'application/json'}
+    };
+    return fetch(url, options)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(res.statusText);
+        }
+        return res;
+      })
+      .then(res => res.json());
+  }
+
+  async get(url) {
+    const options = {
+      method: 'get'
+    };
+    return fetch(url, options)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`${res.status} ${res.statusText}`);
+        }
+        return res;
+      });
+  }
+
 }
-
-let fetch;
-
-async function post(url, obj) {
-  const options = {
-    method: 'post',
-    body: JSON.stringify(obj),
-    headers: {'content-type': 'application/json'}
-  };
-  fetch = fetch || require('node-fetch');
-  return fetch(url, options)
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(res.statusText);
-      }
-      return res;
-    })
-    .then(res => res.json());
-}
-
 
 module.exports = Server;

@@ -8,7 +8,8 @@ const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
 const {makeTestGenerator} = require('../test/helpers');
-const {checks, makeLogEntryChecker, makePatchEntryCheckers} = require('../test/checks');
+const {waitForLogLines} = require('../test/wait-for-log-lines');
+const {makeLogEntryChecker, makePatchEntryCheckers} = require('../test/checks1');
 
 const pdj = require('../test/servers/package.json');
 
@@ -104,7 +105,7 @@ describe('server error log tests', function() {
           patch: patchEntries.length,
           'unknown-config-items': 1
         };
-        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
+        const {lines: logLines, linesNeeded} = await waitForLogLines(typesNeeded);
 
         // make sure all header and patch entries are present
         expect(logLines.length).gte(linesNeeded, 'not enough lines');
