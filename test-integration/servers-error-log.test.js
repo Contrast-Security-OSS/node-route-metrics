@@ -118,12 +118,6 @@ describe('server error log tests', function() {
       // the test
       //
       it('header and patch entries are present after startup', async function() {
-        // also check for the unknown-config-items entry
-        // const typesNeeded = {
-        //   header: 1,
-        //   patch: patchEntries.length,
-        //   'unknown-config-items': 1
-        // };
         const unknownConfigChecker = new CustomChecker({type: 'unknown-config-items'});
         checkers.add(unknownConfigChecker);
         const {lines, numberOfLinesNeeded} = await checkers.waitForLogLines();
@@ -133,7 +127,7 @@ describe('server error log tests', function() {
         const logObjects = lines.map(line => JSON.parse(line));
 
         checkers.check(logObjects);
-        expect(unknownConfigChecker.getEntryCount()).equal(1);
+        expect(unknownConfigChecker.getCount()).equal(1);
       });
 
     });

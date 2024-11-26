@@ -1,26 +1,13 @@
 'use strict';
 
+const BaseChecker = require('./_base');
 
-class CustomChecker {
+class CustomChecker extends BaseChecker {
   constructor(options = {}) {
     if (!options.type) {
       throw new Error('CustomChecker requires a type');
     }
-    this.type = options.type;
-    this.requiredEntries = options.requiredEntries || 0;
-    this.entryCount = 0;
-  }
-
-  getCountOfRequiredEntries() {
-    return this.requiredEntries;
-  }
-
-  check(entry) {
-    this.entryCount += 1;
-  }
-
-  getEntryCount() {
-    return this.entryCount;
+    super(options);
   }
 }
 

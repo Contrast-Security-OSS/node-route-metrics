@@ -3,12 +3,15 @@
 const {expect} = require('chai');
 const semver = require('semver');
 
+const BaseChecker = require('./_base');
+
 const nodeIsGreaterThanV20 = semver.satisfies(process.version, '>=20.0.0');
 const nodeIsLessThanV18dot19 = semver.satisfies(process.version, '<18.19.0');
 
-class PatchChecker {
+class PatchChecker extends BaseChecker {
   constructor(options) {
-    this.type = 'patch';
+    super(Object.assign({}, options, {type: 'patch'}));
+
     const {requiredPatches = [], ...otherOptions} = options;
     this.staticRequiredPatches = requiredPatches.slice();
     this.requiredPatches = requiredPatches.slice();
@@ -22,6 +25,8 @@ class PatchChecker {
   }
 
   check(entry) {
+    super.check(entry);
+
     const {name} = entry;
     if (!this.requiredPatches.length) {
       return;
@@ -42,7 +47,7 @@ class PatchChecker {
     expect(this.staticRequiredPatches).includes(name);
   }
 
-  getCountOfRequiredEntries() {
+  getNumberOfRequiredEntries() {
     return this.staticRequiredPatches.length;
   }
 

@@ -140,7 +140,7 @@ describe('server log tests', function() {
         const logObjects = lines.map(line => JSON.parse(line));
 
         checkers.check(logObjects);
-        expect(routeChecker.getRouteEntryCount()).equal(3);
+        expect(routeChecker.getCount()).equal(3);
       });
 
       it('do not write a record if end() is not called', async function() {

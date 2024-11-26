@@ -30,6 +30,10 @@ class Checkers {
     this.checkers[checker.type] = checker;
   }
 
+  getChecker(type) {
+    return this.checkers[type];
+  }
+
   check(entries) {
     for (let i = 0; i < entries.length; i++) {
       const {type, entry} = entries[i];
@@ -41,11 +45,11 @@ class Checkers {
     }
   }
 
-  getCountOfRequiredEntries() {
+  getRequiredEntriesCount() {
     let numberOfLinesNeeded = 0;
     const specificCountsNeeded = Object.create(null);
     for (const key in this.checkers) {
-      const countNeeded = this.checkers[key].getCountOfRequiredEntries();
+      const countNeeded = this.checkers[key].getNumberOfRequiredEntries();
       specificCountsNeeded[key] = countNeeded;
       numberOfLinesNeeded += countNeeded;
     }
@@ -54,7 +58,7 @@ class Checkers {
   }
 
   async waitForLogLines(options = {}) {
-    const {numberOfLinesNeeded, specificCountsNeeded} = this.getCountOfRequiredEntries();
+    const {numberOfLinesNeeded, specificCountsNeeded} = this.getRequiredEntriesCount();
 
     const maxWaitTime = ('maxWaitTime' in options) ? options.maxWaitTime : 100;
     const loopWaitTime = ('loopWaitTime' in options) ? options.loopWaitTime : 10;
@@ -67,7 +71,7 @@ class Checkers {
     for (let tries = 0; tries < maxTries; tries++) {
       text = await fsp.readFile(this.filename, {encoding: 'utf8'});
       lines = text.split('\n').slice(0, -1);
-      const logObjects = lines.map(l => JSON.parse(l));
+      const logObjects = lines.map(line => JSON.parse(line));
       if (lines.length >= numberOfLinesNeeded && this.haveAllRequestedLines(logObjects, specificCountsNeeded)) {
         foundAll = true;
         break;
@@ -85,21 +89,14 @@ class Checkers {
   }
 
   /**
- * allRequestLines() returns true if the minimum number of each required
- * type of log entry has been found. because it can be called multiple
- * times, but is called with all log entries - not just the new entries -
- * it does not modify the `needed` object; it copies it each time.
- */
+   * allRequestLines() returns true if the minimum number of each required
+   * type of log entry has been found. because it can be called multiple
+   * times, but is called with all log entries - not just the new entries -
+   * it does not modify the `needed` object; it copies it each time.
+   */
   haveAllRequestedLines(logObjects, specificCountsNeeded) {
-    const defaultsNeeded = {
-      header: 1,
-      patch: 0,
-      gc: 0,
-      eventloop: 0,
-      metric: 0,
-    };
     // copy
-    const neededCounts = Object.assign({}, defaultsNeeded, specificCountsNeeded);
+    const neededCounts = Object.assign({}, specificCountsNeeded);
     // get rid of keys that are not needed
     for (const key in neededCounts) {
       if (neededCounts[key] === 0) {
@@ -140,5 +137,7 @@ module.exports = {
   PatchChecker: require('./patch'),
   RouteChecker: require('./route'),
   ProcChecker: require('./proc'),
+  GcChecker: require('./gc'),
+  EventloopChecker: require('./eventloop'),
   CustomChecker: require('./custom'),
 };

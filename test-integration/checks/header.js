@@ -3,6 +3,8 @@
 const os = require('os');
 const expect = require('chai').expect;
 
+const BaseChecker = require('./_base');
+
 /**
  * checkHeader() checks to see if the header is correct. It duplicates much of
  * the code for writing the header.
@@ -33,10 +35,9 @@ const _os = {
   endianness: os.endianness(),
 };
 
-class HeaderChecker {
-  // makeLogEntryChecker('header', pdj, overrides)
-  constructor(pdj, overrides) {
-    this.type = 'header';
+class HeaderChecker extends BaseChecker {
+  constructor(pdj, overrides = {}) {
+    super({type: 'header', requiredEntries: 1});
     this.pdj = pdj;
     this.overrides = overrides;
   }
@@ -104,10 +105,6 @@ class HeaderChecker {
     }
 
     expect(entry).eql(expected);
-  }
-
-  getCountOfRequiredEntries() {
-    return 1;
   }
 }
 
