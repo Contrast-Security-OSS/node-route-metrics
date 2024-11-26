@@ -1,6 +1,5 @@
 'use strict';
 
-const fetch = require('node-fetch');
 const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
@@ -14,7 +13,7 @@ const tests = makeTestGenerator({useEmptyNodeArgs: true});
 //
 describe('server response tests', function() {
   //
-  // define the tests using the generator
+  // iterate through the tests produced by the generator
   //
   for (const t of tests()) {
     const {server, appArgs, base} = t;
@@ -59,7 +58,7 @@ describe('server response tests', function() {
       it('should echo an object', async function() {
         const obj = {cat: 'tuna', dog: 'beef', snake: 'mouse'};
 
-        return post(`${base}/echo`, obj)
+        return testServer.post(`${base}/echo`, obj)
           .then(result => {
             expect(result).eql(obj);
           });
@@ -69,7 +68,7 @@ describe('server response tests', function() {
         const obj = {texas: 'dallas', maryland: 'baltimore', massachusetts: 'boston'};
         const s = JSON.stringify(obj);
 
-        return post(`${base}/meta`, obj)
+        return testServer.post(`${base}/meta`, obj)
           .then(result => {
             expect(result.bytes).equal(s.length, 'wrong byte count');
 
@@ -90,26 +89,3 @@ describe('server response tests', function() {
     });
   }
 });
-
-async function post(url, obj) {
-  const options = {
-    method: 'post',
-    body: JSON.stringify(obj),
-    headers: {'content-type': 'application/json'}
-  };
-  return fetch(url, options)
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(res.statusText);
-      }
-      return res;
-    })
-    .then(res => res.json());
-}
-
-// eslint-disable-next-line no-unused-vars
-function wait(ms) {
-  return new Promise((resolve) => {
-    setTimeout(resolve, ms);
-  });
-}

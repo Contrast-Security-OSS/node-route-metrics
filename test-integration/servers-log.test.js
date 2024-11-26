@@ -2,7 +2,6 @@
 
 const fsp = require('fs').promises;
 const path = require('path');
-const util = require('node:util');
 
 const {expect} = require('chai');
 const semver = require('semver');
@@ -35,7 +34,6 @@ describe('server log tests', function() {
   //
   for (const t of tests()) {
     let testServer;
-    let expectedEntries;
     let checkers;
 
     const {server, base, desc, nodeArgs, appArgs} = t;
@@ -99,9 +97,8 @@ describe('server log tests', function() {
         if (false && this.currentTest.state === 'failed') {
           /* eslint-disable no-console */
           console.log('new Server(', lastArgs, ')');
-          console.log('last logLines', lastLogLines);
-          const opts = {depth: 10, colors: false};
-          console.log('last logEntries', expectedEntries.map(e => util.inspect(e.validator.show(), opts)));
+          console.log('logLines', lastLogLines);
+          //const opts = {depth: 10, colors: false};
           /* eslint-enable no-console */
         }
       });

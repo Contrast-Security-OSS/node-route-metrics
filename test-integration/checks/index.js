@@ -5,12 +5,13 @@ const fsp = require('fs').promises;
 class Checkers {
   constructor(options = {}) {
     this.checkers = {
-      // header: {validator: checkHeader},
-      // patch: {validator: checkPatch, data: []},
-      // route: {validator: checkMetrics},
-      // gc: {validator: checkGarbageCollection},
-      // eventloop: {validator: checkEventloop},
-      // proc: {validator: checkProc},
+      // header
+      // patch
+      // route
+      // gc
+      // eventloop
+      // proc
+      // custom
     };
     const {
       initialCheckers = [],
@@ -139,4 +140,5 @@ module.exports = {
   PatchChecker: require('./patch'),
   RouteChecker: require('./route'),
   ProcChecker: require('./proc'),
+  CustomChecker: require('./custom'),
 };
