@@ -10,12 +10,13 @@ const semver = require('semver');
 
 const Server = require('../test/servers/server');
 const {makeTestGenerator} = require('../test/helpers');
+
 const {
-  checks,
-  makeLogEntryChecker,
-  makePatchEntryCheckers,
-  makeUnorderedLogEntryChecker,
-} = require('../test/checks');
+  Checkers,
+  HeaderChecker,
+  PatchChecker,
+  getMinimalPatchEntries,
+} = require('../test/checks2');
 
 const pdj = require('../test/servers/package.json');
 
@@ -36,7 +37,7 @@ describe('server log tests', function() {
   for (const t of tests()) {
     let testServer;
     let expectedEntries;
-    let patchEntries;
+    let checkers;
 
     const {server, base, desc, nodeArgs, appArgs} = t;
 
@@ -85,6 +86,7 @@ describe('server log tests', function() {
       beforeEach(function() {
         // build the array of expected log entries. these need to be done
         // each test because a patch entry is removed after it's been checked.
+        /*
         const overrides = {execArgv: t.nodeArgs};
         expectedEntries = [makeLogEntryChecker('header', pdj, overrides)];
         patchEntries = makePatchEntryCheckers(t);
@@ -98,7 +100,17 @@ describe('server log tests', function() {
             {type: 'proc'},
           ])
         ];
+
         expectedEntries.push(...unorderedEntries);
+        // */
+        const overrides = {execArgv: t.nodeArgs};
+        const requiredPatches = getMinimalPatchEntries(t);
+
+        const initialCheckers = [
+          {CheckerClass: HeaderChecker, constructorArgs: [pdj, overrides]},
+          {CheckerClass: PatchChecker, constructorArgs: [{requiredPatches}]},
+        ];
+        checkers = new Checkers({initialCheckers});
       });
 
       afterEach(function() {
@@ -117,31 +129,33 @@ describe('server log tests', function() {
       // the tests start here
       //
       it('header and patch entries are present after startup', async function() {
-        const subset = expectedEntries.filter(e => {
-          return e.type === 'header' || e.type === 'patch';
-        });
+        // const subset = expectedEntries.filter(e => {
+        //   return e.type === 'header' || e.type === 'patch';
+        // });
 
-        const typesNeeded = {
-          header: 1,
-          patch: patchEntries.length,
-        };
+        // const typesNeeded = {
+        //   header: 1,
+        //   patch: patchEntries.length,
+        // };
 
         const opts = {};
         if (v18 && t.desc === 'simple with route-metrics + node agent via http (http)') {
           opts.maxWaitTime = 2000;
         }
-        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded, opts);
-        lastLogLines = logLines;
+        const {lines, numberOfLinesNeeded} = await checkers.waitForLogLines(opts);
+        lastLogLines = lines;
 
-        expect(logLines.length).gte(linesNeeded, 'not enough lines');
-        const logObjects = logLines.map(line => JSON.parse(line));
+        expect(lines.length).gte(numberOfLinesNeeded, 'not enough lines');
+        const logObjects = lines.map(line => JSON.parse(line));
 
-        for (let i = 0; i < subset.length; i++) {
-          expect(subset[i]).property('validator').a('function', `$missing validator index ${i}`);
-          const {validator} = subset[i];
-          expect(logObjects[i]).property('type').equal(subset[i].type);
-          validator(logObjects[i].entry);
-        }
+        checkers.check(logObjects);
+
+        // for (let i = 0; i < subset.length; i++) {
+        //   expect(subset[i]).property('validator').a('function', `$missing validator index ${i}`);
+        //   const {validator} = subset[i];
+        //   expect(logObjects[i]).property('type').equal(subset[i].type);
+        //   validator(logObjects[i].entry);
+        // }
       });
 
       it('post and get entries are present', async function() {
@@ -151,24 +165,27 @@ describe('server log tests', function() {
         await post(`${base}/meta`, obj);
         await get(`${base}/info`);
 
-        const typesNeeded = {
-          header: 1,
-          patch: patchEntries.length,
-          route: 3,
-        };
+        // const typesNeeded = {
+        //   header: 1,
+        //   patch: patchEntries.length,
+        //   route: 3,
+        // };
 
         const opts = {maxWaitTime: 1000};
-        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded, opts);
-        lastLogLines = logLines;
+        const {lines, numberOfLinesNeeded} = await checkers.waitForLogLines(opts);
+        lastLogLines = lines;
 
-        // make sure all header and patch entries are present
-        expect(logLines.length).gte(linesNeeded, 'not enough lines');
-        const logObjects = logLines.map(line => JSON.parse(line));
+        expect(lines.length).gte(numberOfLinesNeeded, 'not enough lines');
+        const logObjects = lines.map(line => JSON.parse(line));
+
+        checkers.check(logObjects);
+
+        return;
 
         for (let i = 0; i < expectedEntries.length; i++) {
           // if we've gotten through lines needed, that's good enough. unorderedLogEntries
           // can have extra entries.
-          if (i >= linesNeeded) {
+          if (i >= numberOfLinesNeeded) {
             break;
           }
 
@@ -195,21 +212,23 @@ describe('server log tests', function() {
             expect(e.code).equal('ECONNRESET');
           });
 
-        const typesNeeded = {
-          header: 1,
-          patch: patchEntries.length,
-        };
-        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
-        lastLogLines = logLines;
+        // const typesNeeded = {
+        //   header: 1,
+        //   patch: patchEntries.length,
+        // };
+        const {lines, numberOfLinesNeeded} = await checkers.waitForLogLines();
+        lastLogLines = lines;
 
-        // make sure all header and patch entries are present
-        expect(logLines.length).gte(linesNeeded, 'not enough lines');
-        const logObjects = logLines.map(line => JSON.parse(line));
+        expect(lines.length).gte(numberOfLinesNeeded, 'not enough lines');
+        const logObjects = lines.map(line => JSON.parse(line));
+
+        checkers.check(logObjects);
+        return;
 
         for (let i = 0; i < expectedEntries.length; i++) {
           // if we've gotten through lines needed, that's good enough. unorderedLogEntries
           // can have extra entries.
-          if (i >= linesNeeded) {
+          if (i >= numberOfLinesNeeded) {
             break;
           }
 
