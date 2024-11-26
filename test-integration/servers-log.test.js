@@ -16,6 +16,7 @@ const {
   HeaderChecker,
   PatchChecker,
   getMinimalPatchEntries,
+  RouteChecker,
 } = require('../test/checks2');
 
 const pdj = require('../test/servers/package.json');
@@ -104,7 +105,7 @@ describe('server log tests', function() {
         expectedEntries.push(...unorderedEntries);
         // */
         const overrides = {execArgv: t.nodeArgs};
-        const requiredPatches = getMinimalPatchEntries(t);
+        const requiredPatches = PatchChecker.getMinimalPatchEntries(t);
 
         const initialCheckers = [
           {CheckerClass: HeaderChecker, constructorArgs: [pdj, overrides]},
@@ -129,15 +130,6 @@ describe('server log tests', function() {
       // the tests start here
       //
       it('header and patch entries are present after startup', async function() {
-        // const subset = expectedEntries.filter(e => {
-        //   return e.type === 'header' || e.type === 'patch';
-        // });
-
-        // const typesNeeded = {
-        //   header: 1,
-        //   patch: patchEntries.length,
-        // };
-
         const opts = {};
         if (v18 && t.desc === 'simple with route-metrics + node agent via http (http)') {
           opts.maxWaitTime = 2000;
@@ -149,13 +141,6 @@ describe('server log tests', function() {
         const logObjects = lines.map(line => JSON.parse(line));
 
         checkers.check(logObjects);
-
-        // for (let i = 0; i < subset.length; i++) {
-        //   expect(subset[i]).property('validator').a('function', `$missing validator index ${i}`);
-        //   const {validator} = subset[i];
-        //   expect(logObjects[i]).property('type').equal(subset[i].type);
-        //   validator(logObjects[i].entry);
-        // }
       });
 
       it('post and get entries are present', async function() {
@@ -170,6 +155,8 @@ describe('server log tests', function() {
         //   patch: patchEntries.length,
         //   route: 3,
         // };
+        const routeChecker = new RouteChecker({routesExpected: 3});
+        checkers.add(routeChecker);
 
         const opts = {maxWaitTime: 1000};
         const {lines, numberOfLinesNeeded} = await checkers.waitForLogLines(opts);
@@ -179,6 +166,7 @@ describe('server log tests', function() {
         const logObjects = lines.map(line => JSON.parse(line));
 
         checkers.check(logObjects);
+        expect(routeChecker.getRouteEntryCount()).equal(3);
 
         return;
 
