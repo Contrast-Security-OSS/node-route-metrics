@@ -14,7 +14,7 @@ const path = require('path');
 const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
-const {makeTestGenerator} = require('../test/helpers');
+const {makeTestGenerator} = require('./_helpers.js');
 const {
   Checkers,
   HeaderChecker,
@@ -204,7 +204,6 @@ describe('server time-series tests', function() {
         const logObjects = lines.map(line => JSON.parse(line));
 
         checkers.check(logObjects);
-        console.log('routeChecker.getCount()', routeChecker.getCount());
       });
     });
   }

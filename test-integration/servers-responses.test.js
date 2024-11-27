@@ -3,7 +3,7 @@
 const {expect} = require('chai');
 
 const Server = require('../test/servers/server');
-const {makeTestGenerator} = require('../test/helpers');
+const {makeTestGenerator} = require('./_helpers');
 
 const tests = makeTestGenerator({useEmptyNodeArgs: true});
 
