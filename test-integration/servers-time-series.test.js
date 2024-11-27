@@ -62,6 +62,9 @@ describe('server time-series tests', function() {
 
     const {server, base, desc, nodeArgs, appArgs} = t;
 
+    const expectedGcCount = t.env.CSI_RM_GARBAGE_COLLECTION ? 1 : 0;
+    const expectedEventloopCount = t.env.CSI_RM_EVENTLOOP ? 1 : 0;
+
     describe(desc, function() {
       this.timeout(10000);
       let lastArgs;
@@ -133,9 +136,6 @@ describe('server time-series tests', function() {
       it('header, patch, and time-series entries are all correct', async function() {
         this.timeout(12000);
 
-        const expectedGcCount = t.env.CSI_RM_GARBAGE_COLLECTION ? 1 : 0;
-        const expectedEventloopCount = t.env.CSI_RM_EVENTLOOP ? 1 : 0;
-
         const gcChecker = new GcChecker({requiredEntries: expectedGcCount});
         const eventloopChecker = new EventloopChecker({requiredEntries: expectedEventloopCount});
         const procChecker = new ProcChecker();
@@ -169,86 +169,43 @@ describe('server time-series tests', function() {
         }
       });
 
-      /*
-      it.skip('post and get entries are present with time-series entries', async function() {
-        const {checkers: timeSeriesEntries, gc, eventloop} = makeTimeSeriesCheckers(t);
+      it('post and get entries are present with time-series entries', async function() {
+        const gcChecker = new GcChecker({requiredEntries: expectedGcCount});
+        checkers.add(gcChecker);
 
-        const metricsEntries = [
-          makeMetricsChecker('post', '/echo'),
-          makeMetricsChecker('post', '/meta'),
-          makeMetricsChecker('get', '/info'),
+        const eventloopChecker = new EventloopChecker({requiredEntries: expectedEventloopCount});
+        checkers.add(eventloopChecker);
+
+        const routesToCheck = [
+          {method: 'POST', path: '/echo'},
+          {method: 'POST', path: '/meta'},
+          {method: 'GET', path: '/info'},
         ];
+        const routeCheckerOptions = {
+          requiredEntries: 3,
+          routesToCheck,
+          allowDuplicates: false,
+          allowUnknownRoutes: false,
+        };
+        const routeChecker = new RouteChecker(routeCheckerOptions);
+        checkers.add(routeChecker);
 
         // now execute some requests
         const obj = {cat: 'tuna', dog: 'beef', snake: 'mouse'};
-        post(`${base}/echo`, obj);
-        post(`${base}/meta`, obj);
-        get(`${base}/info`);
-
-        const typesNeeded = {
-          header: 1,
-          patch: expectedLogEntries.length - 1,
-          metrics: metricsEntries.length,
-          gc,
-          eventloop,
-        };
+        testServer.post(`${base}/echo`, obj);
+        testServer.post(`${base}/meta`, obj);
+        testServer.get(`${base}/info`);
 
         const options = {maxWaitTime: 3500};
-        const {lines: logLines, linesNeeded} = await waitForLogLines(typesNeeded, options);
-        lastLogLines = logLines;
+        const {lines, numberOfLinesNeeded} = await checkers.waitForLogLines(options);
+        lastLogLines = lines;
 
-        if (debugging && logLines.length < linesNeeded) {
-          // eslint-disable-next-line no-console
-          console.log(logLines);
-        }
+        expect(lines.length).gte(numberOfLinesNeeded, 'not enough lines');
+        const logObjects = lines.map(line => JSON.parse(line));
 
-        expect(logLines.length).gte(linesNeeded, 'not enough lines');
-        const logObjects = logLines.map(line => JSON.parse(line));
-
-        for (let i = 0; i < expectedLogEntries.length; i++) {
-          expect(expectedLogEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
-          const {validator} = expectedLogEntries[i];
-          expect(logObjects[i]).property('type').equal(expectedLogEntries[i].type);
-          validator(logObjects[i].entry);
-        }
-
-        // one time for each of these
-        const metricsEntriesLeft = {};
-        for (const me of metricsEntries) {
-          metricsEntriesLeft[`${me.method}${me.pathEnd}`] = me;
-        }
-        // multiple times for these
-        const tsEntries = {};
-        for (const ts of timeSeriesEntries) {
-          tsEntries[ts.type] = ts;
-        }
-
-
-        // only check the remaining items (time-series and metrics)
-        const remaining = logObjects.slice(expectedLogEntries.length);
-
-        // allows time-series and metrics to be interleaved and in any order.
-        // probably a candidate for a utility function so it can be applied
-        // to other tests.
-        for (const entry of remaining) {
-          if (entry.type in tsEntries) {
-            tsEntries[entry.type].validator(entry.entry);
-          } else if (entry.type === 'route') {
-            const me = `${entry.entry.method.toLowerCase()}${entry.entry.url}`;
-            if (me in metricsEntriesLeft) {
-              delete metricsEntriesLeft[me];
-            } else if (debugging) {
-              // eslint-disable-next-line no-console
-              console.log(`unexpected metrics entry: ${me}`);
-            }
-          } else {
-            throw new Error('unexpected entry type');
-          }
-        }
-        const leftoverKeys = Object.keys(metricsEntriesLeft);
-        expect(leftoverKeys).eql([], `metrics not found ${leftoverKeys.join(',')}`);
+        checkers.check(logObjects);
+        console.log('routeChecker.getCount()', routeChecker.getCount());
       });
-      // */
     });
   }
 });
