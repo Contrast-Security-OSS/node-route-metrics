@@ -8,13 +8,9 @@
 // - can ignore duplicate log entries (gc, eventloop)
 //
 
-const fsp = require('fs').promises;
-const path = require('path');
-
 const {expect} = require('chai');
 
-const Server = require('../test/servers/server');
-const {makeTestGenerator} = require('./_helpers.js');
+const {makeTestGenerator, setup} = require('./_helpers.js');
 const {
   Checkers,
   HeaderChecker,
@@ -60,7 +56,7 @@ describe('server time-series tests', function() {
       },
     };
 
-    const {server, base, desc, nodeArgs, appArgs} = t;
+    const {desc} = t;
 
     const expectedGcCount = t.env.CSI_RM_GARBAGE_COLLECTION ? 1 : 0;
     const expectedEventloopCount = t.env.CSI_RM_EVENTLOOP ? 1 : 0;
@@ -77,19 +73,7 @@ describe('server time-series tests', function() {
       before(async function() {
         // don't wait so long
         process.env.CSI_ROUTE_METRICS_TIME_SERIES_INTERVAL = 100;
-        return fsp.unlink('route-metrics.log')
-          .catch(e => null)
-          .then(() => {
-            const absoluteServerPath = path.resolve(`./test/servers/${server}`);
-            const nodeargs = [...nodeArgs, absoluteServerPath, ...appArgs];
-            lastArgs = nodeargs;
-            const env = Object.assign({}, process.env, t.env);
-            testServer = new Server(nodeargs, {env});
-            // make argv match what the server will see.
-            process.argv = [process.argv[0], absoluteServerPath, ...appArgs];
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-            return testServer.readyPromise;
-          });
+        testServer = await setup(t);
       });
 
       after(async function() {
@@ -182,7 +166,6 @@ describe('server time-series tests', function() {
           {method: 'GET', path: '/info'},
         ];
         const routeCheckerOptions = {
-          requiredEntries: 3,
           routesToCheck,
           allowDuplicates: false,
           allowUnknownRoutes: false,
@@ -192,9 +175,9 @@ describe('server time-series tests', function() {
 
         // now execute some requests
         const obj = {cat: 'tuna', dog: 'beef', snake: 'mouse'};
-        testServer.post(`${base}/echo`, obj);
-        testServer.post(`${base}/meta`, obj);
-        testServer.get(`${base}/info`);
+        testServer.post('/echo', obj);
+        testServer.post('/meta', obj);
+        testServer.get('/info');
 
         const options = {maxWaitTime: 3500};
         const {lines, numberOfLinesNeeded} = await checkers.waitForLogLines(options);

@@ -28,9 +28,15 @@ class Server {
         }
         // wait to see the pid output. by test convention that's when
         // the callback of server.listen() has been called.
-        if (/^\d+\n$/.test(s)) {
+        const m = s.match(/^\d+:(?<http>\d*):(?<https>\d*)\n$/);
+        if (m) {
+        //if (/^\d+:(\d*)(:\d*)?\n$/.test(s)) {
           this.havePid = true;
-          resolve();
+          if (!m.groups.http && !m.groups.https) {
+            reject(new Error('no ports'));
+          }
+
+          resolve({http: +m.groups.http, https: +m.groups.https});
         } else {
           if (Server.isAgentStartupNoise(s)) {
             return;

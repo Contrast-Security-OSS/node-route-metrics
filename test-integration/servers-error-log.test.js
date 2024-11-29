@@ -1,13 +1,8 @@
 'use strict';
 
-const fs = require('fs');
-const fsp = fs.promises;
-const path = require('path');
-
 const {expect} = require('chai');
 
-const Server = require('../test/servers/server');
-const {makeTestGenerator} = require('./_helpers');
+const {makeTestGenerator, setup} = require('./_helpers');
 
 const {
   Checkers,
@@ -41,7 +36,7 @@ describe('server error log tests', function() {
   for (const t of tests()) {
     let testServer;
     let checkers;
-    const {server, base, desc, nodeArgs, appArgs} = t;
+    const {desc} = t;
 
     describe(desc, function() {
       this.timeout(10000);
@@ -51,20 +46,8 @@ describe('server error log tests', function() {
       // start the server
       //
       before(async function() {
-        return fsp.unlink('route-metrics.log')
-          .catch(e => null)
-          .then(() => {
-            const absoluteServerPath = path.resolve(`./test/servers/${server}`);
-            const nodeargs = [...nodeArgs, absoluteServerPath, ...appArgs];
-            lastArgs = nodeargs;
-
-            const env = Object.assign({}, process.env, t.env);
-            testServer = new Server(nodeargs, {env});
-            // make argv match what the server will see.
-            process.argv = [process.argv[0], absoluteServerPath, ...appArgs];
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-            return testServer.readyPromise;
-          });
+        testServer = await setup(t);
+        lastArgs = t.nodeArgs;
       });
 
       after(async function() {

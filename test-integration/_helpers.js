@@ -1,7 +1,12 @@
 #!/usr/bin/env node
 'use strict';
 
+const fsp = require('fs').promises;
+const path = require('path');
 const util = require('util');
+const semver = require('semver');
+
+const Server = require('../test/servers/server');
 const {AGENTS} = require('../lib/patcher');
 
 const defaultEnv = {
@@ -18,8 +23,7 @@ const defaultOptions = {
 };
 
 let loader = '--import';
-const nodeVersion = process.versions.node.split('.');
-if (nodeVersion[0] < 18 || (nodeVersion[0] == 18 && nodeVersion[1] < 19)) {
+if (semver.satisfies(process.versions.node, '<=18.19.0')) {
   loader = '-r';
 }
 
@@ -105,6 +109,50 @@ function removeDefaultEnv(env) {
   return e;
 }
 
+async function setup(t) {
+  try {
+    await fsp.unlink('route-metrics.log');
+  } catch (e) {
+    // ignore
+  }
+
+  const {server, nodeArgs, appArgs, base} = t;
+
+  const absoluteServerPath = path.resolve(`./test/servers/${server}`);
+  const nodeargs = [...nodeArgs, absoluteServerPath, ...appArgs];
+  const env = Object.assign({}, process.env, t.env);
+  const testServer = new Server(nodeargs, {env});
+  // make argv match what the server will see.
+  process.argv = [process.argv[0], absoluteServerPath, ...appArgs];
+  process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+  const ports = await testServer.readyPromise;
+
+  // wrap the http verbs with the correct port for the test (base specifies
+  // the protocol and port, but the port is dynamically assigned, so it needs
+  // to be updated).
+  wrapVerbs(testServer, base, ports);
+
+  return testServer;
+}
+
+function wrapVerbs(testServer, base, ports) {
+  const parts = base.split(':');
+  const protocol = parts[0];
+  const host = parts[1];
+  const port = ports[protocol];
+  const baseUrl = `${protocol}://${host}:${port}`;
+
+  const originalPost = testServer.post;
+  const originalGet = testServer.get;
+
+  testServer.post = function(path, ...args) {
+    return originalPost.call(testServer, `${baseUrl}${path}`, ...args);
+  };
+  testServer.get = function(path, ...args) {
+    return originalGet.call(testServer, `${baseUrl}${path}`, ...args);
+  };
+}
+
 //
 // tagged combinations generator. it takes any number of arguments of the form:
 // {key1: [value1, value2]}, {keyA: [valueA, valueB]} and returns an array of
@@ -139,6 +187,7 @@ function* combinations(head, ...tail) {
 
 module.exports = {
   makeTestGenerator,
+  setup,
   combinations,
 };
 

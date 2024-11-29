@@ -1,13 +1,9 @@
 'use strict';
 
-const fsp = require('fs').promises;
-const path = require('path');
-
 const {expect} = require('chai');
 const semver = require('semver');
 
-const Server = require('../test/servers/server');
-const {makeTestGenerator} = require('./_helpers');
+const {makeTestGenerator, setup} = require('./_helpers');
 
 const {
   Checkers,
@@ -36,28 +32,22 @@ describe('server log tests', function() {
     let testServer;
     let checkers;
 
-    const {server, base, desc, nodeArgs, appArgs} = t;
+    const {desc} = t;
 
     describe(desc, function() {
       this.timeout(10000);
       let lastArgs;
       let lastLogLines;
-      //
-      // start the server
-      //
-      before(async function() {
-        return fsp.unlink('route-metrics.log')
-          .catch(e => null)
-          .then(() => {
-            const absoluteServerPath = path.resolve(`./test/servers/${server}`);
-            const nodeargs = [...nodeArgs, absoluteServerPath, ...appArgs];
-            lastArgs = nodeargs;
-            testServer = new Server(nodeargs);
-            // make argv match what the server will see.
-            process.argv = [process.argv[0], absoluteServerPath, ...appArgs];
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-            return testServer.readyPromise;
-          });
+
+      before(async() => {
+        // delete any existing log file and start the server. this suite of
+        // tests starts one server for each set of tests, so the checks need
+        // to be cumulative for each subsequent step. it's a little more
+        // code but doesn't require starting a new server as often.
+        testServer = await setup(t);
+
+        // remember last args so they can be displayed if a test fails.
+        lastArgs = t.nodeArgs;
       });
 
       after(async function() {
@@ -121,15 +111,26 @@ describe('server log tests', function() {
       });
 
       it('post and get entries are present', async function() {
-        const obj = {cat: 'tuna', dog: 'beef', snake: 'mouse'};
+        const routesToCheck = [
+          {method: 'POST', path: '/echo'},
+          {method: 'POST', path: '/meta'},
+          {method: 'GET', path: '/info'},
+        ];
+        const routeCheckerOptions = {
+          routesToCheck,
+          allowDuplicates: false,
+          allowUnknownRoutes: false,
+        };
+        const routeChecker = new RouteChecker(routeCheckerOptions);
+        checkers.add(routeChecker);
 
-        await testServer.post(`${base}/echo`, obj);
-        await testServer.post(`${base}/meta`, obj);
-        await testServer.get(`${base}/info`);
+        const obj = {cat: 'tuna', dog: 'beef', snake: 'mouse'};
+        await testServer.post('/echo', obj);
+        await testServer.post('/meta', obj);
+        await testServer.get('/info');
 
         // check that three routes are present. should change to specify routes
         // or route patterns and count?
-        const routeChecker = new RouteChecker({routesExpected: 3});
         checkers.add(routeChecker);
 
         const opts = {maxWaitTime: 1000};
@@ -144,7 +145,26 @@ describe('server log tests', function() {
       });
 
       it('do not write a record if end() is not called', async function() {
-        await testServer.post(`${base}/stop/0`, {})
+        // the log is accumulated from test to test, so these routes appear
+        // again. but we need a new checker or "allow duplicates" will fail
+        // because the checker counts the number of times a route is seen.
+        const routesToCheck = [
+          {method: 'POST', path: '/echo'},
+          {method: 'POST', path: '/meta'},
+          {method: 'GET', path: '/info'},
+        ];
+        const routeCheckerOptions = {
+          routesToCheck,
+          allowDuplicates: false,
+          allowUnknownRoutes: false,
+        };
+        const routeChecker = new RouteChecker(routeCheckerOptions);
+        checkers.add(routeChecker);
+
+        // this route is typically accessed by calling testServer.stop() but
+        // is called directly to verify that no route entry is written when
+        // the server doesn't call .end() before exiting.
+        await testServer.post('/stop/0', {})
           .then(() => {
             throw new Error('the server should not return a response');
           })

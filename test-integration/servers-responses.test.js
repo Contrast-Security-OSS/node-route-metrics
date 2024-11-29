@@ -2,21 +2,22 @@
 
 const {expect} = require('chai');
 
-const Server = require('../test/servers/server');
-const {makeTestGenerator} = require('./_helpers');
+const {makeTestGenerator, setup} = require('./_helpers');
 
 const tests = makeTestGenerator({useEmptyNodeArgs: true});
 
 //
 // verify that the server is able to respond correctly with different
-// configurations loaded.
+// configurations loaded. this does not test route-metrics' log file,
+// it tests that route metrics doesn't mess up the server's reponse
+// or an agent's tracking of data.
 //
 describe('server response tests', function() {
   //
   // iterate through the tests produced by the generator
   //
   for (const t of tests()) {
-    const {server, appArgs, base} = t;
+    const {server} = t;
 
     const previousTLS = !!process.env.NODE_TLS_REJECT_UNAUTHORIZED;
 
@@ -28,12 +29,8 @@ describe('server response tests', function() {
       // start the server
       //
       before(async function() {
-        process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-        const options = {env: Object.assign({}, process.env, t.env)};
-        const nodeargs = [...t.nodeArgs, `./test/servers/${server}`, ...appArgs];
-        lastArgs = nodeargs;
-        testServer = new Server(nodeargs, options);
-        return testServer.readyPromise;
+        testServer = await setup(t);
+        lastArgs = t.nodeArgs;
       });
 
       after(async function() {
@@ -58,7 +55,7 @@ describe('server response tests', function() {
       it('should echo an object', async function() {
         const obj = {cat: 'tuna', dog: 'beef', snake: 'mouse'};
 
-        return testServer.post(`${base}/echo`, obj)
+        return testServer.post('/echo', obj)
           .then(result => {
             expect(result).eql(obj);
           });
@@ -68,7 +65,7 @@ describe('server response tests', function() {
         const obj = {texas: 'dallas', maryland: 'baltimore', massachusetts: 'boston'};
         const s = JSON.stringify(obj);
 
-        return testServer.post(`${base}/meta`, obj)
+        return testServer.post('/meta', obj)
           .then(result => {
             expect(result.bytes).equal(s.length, 'wrong byte count');
 

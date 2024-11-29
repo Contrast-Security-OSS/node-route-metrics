@@ -60,7 +60,10 @@ class ServerSkeleton {
     if (this.http) {
       const {host, port} = this.protocols.http;
       const httpServer = this.http.createServer(app);
-      httpServer.listen(port, host, listening);
+      httpServer.listen(port, host, () => {
+        this.protocols.http.port = httpServer.address().port;
+        listening();
+      });
     }
 
     if (this.https) {
@@ -70,7 +73,10 @@ class ServerSkeleton {
       opts.cert = fs.readFileSync(`${__dirname}/../certs/server.cert`, 'utf8');
       const {host, port} = this.protocols.https;
       const httpsServer = this.https.createServer(opts, app);
-      httpsServer.listen(port, host, listening);
+      httpsServer.listen(port, host, () => {
+        this.protocols.https.port = httpsServer.address().port;
+        listening();
+      });
     }
 
     return p;

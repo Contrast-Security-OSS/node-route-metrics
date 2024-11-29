@@ -4,6 +4,13 @@ const BaseChecker = require('./_base');
 
 class RouteChecker extends BaseChecker {
   constructor(options = {}) {
+    // minimal error checking, but both can't be specified.
+    if (options.requiredEntries && options.routesToCheck) {
+      throw new Error('cannot have both requiredEntries and routesToCheck');
+    } else if (options.routesToCheck) {
+      options.requiredEntries = options.routesToCheck.length;
+    }
+
     super(Object.assign({}, options, {type: 'route'}));
 
     this.routesSeen = new Map();
