@@ -2,7 +2,7 @@
 
 const {expect} = require('chai');
 
-const {makeTestGenerator, setup} = require('./_helpers');
+const {makeTestGenerator} = require('./_helpers');
 
 const tests = makeTestGenerator({useEmptyNodeArgs: true});
 
@@ -29,7 +29,7 @@ describe('server response tests', function() {
       // start the server
       //
       before(async function() {
-        testServer = await setup(t);
+        testServer = await t.setup();
         lastArgs = t.nodeArgs;
       });
 

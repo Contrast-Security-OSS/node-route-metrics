@@ -3,7 +3,7 @@
 const {expect} = require('chai');
 const semver = require('semver');
 
-const {makeTestGenerator, setup} = require('./_helpers');
+const {makeTestGenerator} = require('./_helpers');
 
 const {
   Checkers,
@@ -42,9 +42,9 @@ describe('server log tests', function() {
       before(async() => {
         // delete any existing log file and start the server. this suite of
         // tests starts one server for each set of tests, so the checks need
-        // to be cumulative for each subsequent step. it's a little more
-        // code but doesn't require starting a new server as often.
-        testServer = await setup(t);
+        // to be cumulative for each subsequent step. it's duplicate code but
+        // doesn't require starting a new server as often.
+        testServer = await t.setup();
 
         // remember last args so they can be displayed if a test fails.
         lastArgs = t.nodeArgs;

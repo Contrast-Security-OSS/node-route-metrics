@@ -65,38 +65,72 @@ function makeTestGenerator(opts) {
 
   // return the generator that merges the result objects for each combination
   return function*() {
-    for (let t of combos) {
-      t = t.reduce((consol, single) => Object.assign(consol, single), {});
-      // rearrange and augment the test
-      t.protocol = t.protocolPair.fetch;
-      t.loadProtos = t.protocolPair.load;
-      t.nodeArgsDesc = t.nodeArgs.desc;
-      t.desc = `${t.server} with ${t.nodeArgs.desc} via ${t.protocol} (${t.loadProtos.join(', ')})`;
-      const nonDefaultEnv = removeDefaultEnv(t.env);
-      if (Object.keys(nonDefaultEnv).length >= 1) {
-        t.desc = `${t.desc} (${util.format(nonDefaultEnv)})`;
-      }
-      t.nodeArgs = t.nodeArgs.args;
-
-      // make the arguments for the server app and define the base url to access
-      // the server app.
-      let port = basePort;
-      t.appArgs = t.loadProtos.map(p => {
-        if (p === t.protocol) {
-          t.base = `${p}://localhost:${port}`;
-        }
-        return `${p}:localhost:${port++}`;
-      });
-      if (!t.base) {
-        throw new Error(`loadProtos ${t.loadProtos.join(', ')} doesn't contain ${t.protocol}`);
-      }
-
-      const ix = AGENTS.indexOf(t.nodeArgs[t.nodeArgs.length - 1]);
-      t.agentPresent = ix >= 0 && AGENTS[ix];
-
-      yield t;
+    for (const t of combos) {
+      yield new Test(t, {basePort});
     }
   };
+}
+
+class Test {
+  constructor(testDefinition, {basePort}) {
+    // save port before reducing the testDefinition.
+    let port = basePort;
+    const t = testDefinition.reduce((consol, single) => Object.assign(consol, single), {});
+    // rearrange and augment the test
+    t.protocol = t.protocolPair.fetch;
+    t.loadProtos = t.protocolPair.load;
+    t.nodeArgsDesc = t.nodeArgs.desc;
+    t.desc = `${t.server} with ${t.nodeArgs.desc} via ${t.protocol} (${t.loadProtos.join(', ')})`;
+    const nonDefaultEnv = removeDefaultEnv(t.env);
+    if (Object.keys(nonDefaultEnv).length >= 1) {
+      t.desc = `${t.desc} (${util.format(nonDefaultEnv)})`;
+    }
+    t.nodeArgs = t.nodeArgs.args;
+
+    // make the arguments for the server app and define the base url to access
+    // the server app.
+    t.appArgs = t.loadProtos.map(p => {
+      if (p === t.protocol) {
+        t.base = `${p}://localhost:${port}`;
+      }
+      return `${p}:localhost:${port++}`;
+    });
+    if (!t.base) {
+      throw new Error(`loadProtos ${t.loadProtos.join(', ')} doesn't contain ${t.protocol}`);
+    }
+
+    const ix = AGENTS.indexOf(t.nodeArgs[t.nodeArgs.length - 1]);
+    t.agentPresent = ix >= 0 && AGENTS[ix];
+
+    //
+    Object.assign(this, t);
+  }
+
+  async setup(options) {
+    try {
+      await fsp.unlink('route-metrics.log');
+    } catch (e) {
+      // ignore
+    }
+
+    const {server, nodeArgs, appArgs, base} = this;
+
+    const absoluteServerPath = path.resolve(`./test/servers/${server}`);
+    const nodeargs = [...nodeArgs, absoluteServerPath, ...appArgs];
+    const env = Object.assign({}, process.env, this.env);
+    const testServer = new Server(nodeargs, {env});
+    // make argv match what the server will see.
+    process.argv = [process.argv[0], absoluteServerPath, ...appArgs];
+    process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
+    const ports = await testServer.readyPromise;
+
+    // wrap the http verbs with the correct port for the test (base specifies
+    // the protocol and port, but the port is dynamically assigned, so it needs
+    // to be updated).
+    wrapVerbs(testServer, base, ports);
+
+    return testServer;
+  }
 }
 
 function removeDefaultEnv(env) {
@@ -107,32 +141,6 @@ function removeDefaultEnv(env) {
     }
   }
   return e;
-}
-
-async function setup(t) {
-  try {
-    await fsp.unlink('route-metrics.log');
-  } catch (e) {
-    // ignore
-  }
-
-  const {server, nodeArgs, appArgs, base} = t;
-
-  const absoluteServerPath = path.resolve(`./test/servers/${server}`);
-  const nodeargs = [...nodeArgs, absoluteServerPath, ...appArgs];
-  const env = Object.assign({}, process.env, t.env);
-  const testServer = new Server(nodeargs, {env});
-  // make argv match what the server will see.
-  process.argv = [process.argv[0], absoluteServerPath, ...appArgs];
-  process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-  const ports = await testServer.readyPromise;
-
-  // wrap the http verbs with the correct port for the test (base specifies
-  // the protocol and port, but the port is dynamically assigned, so it needs
-  // to be updated).
-  wrapVerbs(testServer, base, ports);
-
-  return testServer;
 }
 
 function wrapVerbs(testServer, base, ports) {
@@ -187,7 +195,6 @@ function* combinations(head, ...tail) {
 
 module.exports = {
   makeTestGenerator,
-  setup,
   combinations,
 };
 

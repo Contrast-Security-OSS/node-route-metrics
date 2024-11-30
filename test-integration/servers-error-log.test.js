@@ -2,7 +2,7 @@
 
 const {expect} = require('chai');
 
-const {makeTestGenerator, setup} = require('./_helpers');
+const {makeTestGenerator} = require('./_helpers');
 
 const {
   Checkers,
@@ -46,7 +46,7 @@ describe('server error log tests', function() {
       // start the server
       //
       before(async function() {
-        testServer = await setup(t);
+        testServer = await t.setup();
         lastArgs = t.nodeArgs;
       });
 

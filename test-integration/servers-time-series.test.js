@@ -10,7 +10,7 @@
 
 const {expect} = require('chai');
 
-const {makeTestGenerator, setup} = require('./_helpers.js');
+const {makeTestGenerator} = require('./_helpers.js');
 const {
   Checkers,
   HeaderChecker,
@@ -73,7 +73,7 @@ describe('server time-series tests', function() {
       before(async function() {
         // don't wait so long
         process.env.CSI_ROUTE_METRICS_TIME_SERIES_INTERVAL = 100;
-        testServer = await setup(t);
+        testServer = await t.setup();
       });
 
       after(async function() {
