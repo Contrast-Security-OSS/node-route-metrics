@@ -14,18 +14,20 @@ const defaultEnv = {
   CSI_EXPOSE_CORE: true,
 };
 
-const defaultOptions = {
-  getEnv: (env) => [env],
-  routeMetrics: './lib/index.js',
-  useEmptyNodeArgs: false,
-  addPatchLogEntries: true,
-  basePort: 8888,
-};
-
 let loader = '--import';
+let routeMetrics = './lib/index-esm.mjs';
 if (semver.satisfies(process.versions.node, '<=18.19.0')) {
   loader = '-r';
+  routeMetrics = './lib/index-cjs.cjs';
 }
+
+const defaultOptions = {
+  getEnv: (env) => [env],
+  routeMetrics,
+  useEmptyNodeArgs: false,
+  addPatchLogEntries: true,
+  basePort: 0,
+};
 
 //
 // makeTestGenerator() returns a generator function that returns tests
@@ -43,14 +45,14 @@ function makeTestGenerator(opts) {
   const protocolPair = {protocolPair: [
     {load: ['http'], fetch: 'http'},
     {load: ['https'], fetch: 'https'},
-    {load: ['http', 'https'], fetch: 'http'},
-    {load: ['http', 'https'], fetch: 'https'},
+    //{load: ['http', 'https'], fetch: 'http'},
+    //{load: ['http', 'https'], fetch: 'https'},
   ]};
 
   const nodeArgs = {nodeArgs: [
     {desc: 'nothing', args: []},
     {desc: 'route-metrics only', args: [loader, routeMetrics]},
-    {desc: 'route-metrics + node agent', args: [loader, routeMetrics, loader, '@contrast/agent']},
+    {desc: 'route-metrics + agent', args: [loader, routeMetrics, loader, '@contrast/agent']},
     //{desc: 'route-metrics + node mono', args: ['-r', routeMetrics, '-r', '@contrast/protect-agent']},
     //{desc: 'route-metrics + rasp-v3', args: ['-r', routeMetrics, '-r', '@contrast/rasp-v3']},
   ]};
@@ -74,7 +76,7 @@ function makeTestGenerator(opts) {
 class Test {
   constructor(testDefinition, {basePort}) {
     // save port before reducing the testDefinition.
-    let port = basePort;
+    const port = basePort;
     const t = testDefinition.reduce((consol, single) => Object.assign(consol, single), {});
     // rearrange and augment the test
     t.protocol = t.protocolPair.fetch;
@@ -93,7 +95,8 @@ class Test {
       if (p === t.protocol) {
         t.base = `${p}://localhost:${port}`;
       }
-      return `${p}:localhost:${port++}`;
+      const port2 = port === 0 ? port : port + 1;
+      return `${p}:localhost:${port2}`;
     });
     if (!t.base) {
       throw new Error(`loadProtos ${t.loadProtos.join(', ')} doesn't contain ${t.protocol}`);

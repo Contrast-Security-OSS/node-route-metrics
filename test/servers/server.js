@@ -28,9 +28,10 @@ class Server {
         }
         // wait to see the pid output. by test convention that's when
         // the callback of server.listen() has been called.
+        // previously was pid alone, now is pid:http-port:https-port but one
+        // port can be empty (not both).
         const m = s.match(/^\d+:(?<http>\d*):(?<https>\d*)\n$/);
         if (m) {
-        //if (/^\d+:(\d*)(:\d*)?\n$/.test(s)) {
           this.havePid = true;
           if (!m.groups.http && !m.groups.https) {
             reject(new Error('no ports'));
@@ -69,7 +70,7 @@ class Server {
   //
   // https://github.com/istanbuljs/nyc/issues/762
   //
-  stop({type, value} = {type: 'signal', value: 'SIGTERM'}) {
+  async stop({type, value} = {type: 'signal', value: 'SIGTERM'}) {
     // if it didn't exit on its own, kill it.
     if (typeof this.exitCode !== 'number') {
       // if the type is an url then post to that url.

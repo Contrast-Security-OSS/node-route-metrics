@@ -14,7 +14,7 @@ Each checker is a class that extends BaseChecker and has a `check` method that i
 
 Some checkers implement nothing more than the base class - they have a `requiredEntries` property (used when waiting for the log file to be written) and a `check` method that counts the number of entries of that type.
 
-Other checkers, notably `route` and `patch`, perform checks for specific entries, allow or disallow duplicates, or use the test configuration to determine what needs to be checked.
+Other checkers, notably `route` and `patch`, perform checks for specific entries, allow or disallow duplicates, or use the test configuration to determine what needs to be checked. `header` is the only checker that makes a detailed check of the contents of the entry.
 
 When written, each integration test file only spawns one server, so the log file accumulates across individual tests, so each test needs to add checkers that were added by a previous test.
 

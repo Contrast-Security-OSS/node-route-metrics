@@ -2,7 +2,7 @@
 
 const defaultOptions = {
   protocols: {
-    http: {host: 'localhost', port: 8888}
+    http: {host: 'localhost', port: 0}
   }
 };
 

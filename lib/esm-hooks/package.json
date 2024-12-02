@@ -1,0 +1,29 @@
+{
+  "name": "@contrast/esm-hooks",
+  "version": "2.16.0",
+  "type": "module",
+  "description": "Support for loading and instrumenting ECMAScript modules",
+  "license": "SEE LICENSE IN LICENSE",
+  "author": "Contrast Security <nodejs@contrastsecurity.com> (https://www.contrastsecurity.com)",
+  "files": [
+    "lib/",
+    "!lib/redirects/esm/node-fetch.mjs-tester"
+  ],
+  "main": "lib/index.mjs",
+  "types": "lib/index.d.ts",
+  "engines": {
+    "npm": ">=6.13.7 <7 || >= 8.3.1",
+    "node": ">= 16.9.1"
+  },
+  "scripts": {
+    "test": "../scripts/test.sh"
+  },
+  "dependencies": {
+    "@contrast/common": "1.27.0",
+    "@contrast/config": "1.37.0",
+    "@contrast/core": "1.42.0",
+    "@contrast/find-package-json": "^1.1.0",
+    "@contrast/logger": "1.15.0",
+    "@contrast/rewriter": "1.18.0"
+  }
+}
