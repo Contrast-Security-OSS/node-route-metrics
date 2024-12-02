@@ -45,8 +45,8 @@ function makeTestGenerator(opts) {
   const protocolPair = {protocolPair: [
     {load: ['http'], fetch: 'http'},
     {load: ['https'], fetch: 'https'},
-    //{load: ['http', 'https'], fetch: 'http'},
-    //{load: ['http', 'https'], fetch: 'https'},
+    {load: ['http', 'https'], fetch: 'http'},
+    {load: ['http', 'https'], fetch: 'https'},
   ]};
 
   const nodeArgs = {nodeArgs: [
