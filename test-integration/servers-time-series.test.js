@@ -1,12 +1,6 @@
 'use strict';
 
-//
-// this test module is the last one written and uses better logic than the
-// other server-log testing modules.
-// - waits for specific sets of log entries as opposed to a line count
-// - doesn't require log entries to be in a specific order
-// - can ignore duplicate log entries (gc, eventloop)
-//
+const path = require('node:path');
 
 const {expect} = require('chai');
 
@@ -22,6 +16,7 @@ const {
 } = require('./checks/index.js');
 
 const pdj = require('../test/servers/package.json');
+const app_dir = path.resolve(__dirname, '../test/servers');
 
 // get helpful output when true and tests fail
 const debugging = false;
@@ -50,6 +45,7 @@ describe('server time-series tests', function() {
 
     // construct expected config based on the test's environment vars
     const overrides = {
+      app_dir,
       config: {
         GARBAGE_COLLECTION: !!t.env.CSI_RM_GARBAGE_COLLECTION,
         EVENTLOOP: !!t.env.CSI_RM_EVENTLOOP,

@@ -1,5 +1,6 @@
 'use strict';
 
+const path = require('node:path');
 const {expect} = require('chai');
 const semver = require('semver');
 
@@ -13,6 +14,7 @@ const {
 } = require('./checks');
 
 const pdj = require('../test/servers/package.json');
+const app_dir = path.resolve(__dirname, '../test/servers');
 
 const tests = makeTestGenerator({});
 
@@ -71,7 +73,7 @@ describe('server log tests', function() {
       });
 
       beforeEach(function() {
-        const overrides = {execArgv: t.nodeArgs};
+        const overrides = {execArgv: t.nodeArgs, app_dir};
         const requiredPatches = PatchChecker.getMinimalPatchEntries(t);
 
         // all tests check for the header and patch entries

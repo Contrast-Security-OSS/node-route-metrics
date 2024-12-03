@@ -44,7 +44,7 @@ class HeaderChecker extends BaseChecker {
 
   check(entry, context) {
     expect(context.index).equal(0, `header must be first entry, not index ${context.index}`);
-    const expected = Object.assign({}, _expected, {os: _os}, {package_json: this.pdj});
+    const expected = Object.assign({}, _expected, {os: _os}, {package_json: this.pdj, app_dir: '.'});
     // set some things that change quickly to just match
     const {freemem, loadavg, uptime} = entry.os;
     expect(freemem).a('number');
