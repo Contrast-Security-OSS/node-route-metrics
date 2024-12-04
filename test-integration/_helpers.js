@@ -7,7 +7,7 @@ const util = require('util');
 const semver = require('semver');
 
 const Server = require('../test/servers/server');
-const {AGENTS} = require('../lib/patcher');
+const AGENTS = ['@contrast/agent'];
 
 const defaultEnv = {
   CONTRAST_DEV: true,
