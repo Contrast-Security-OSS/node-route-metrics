@@ -146,6 +146,12 @@ function removeDefaultEnv(env) {
   return e;
 }
 
+//
+// wraps the server's post and get methods with a function that adds the base
+// URL with the correct protocol (http or https), hostname, and port. this
+// allows tests to just call testServer/post('/echo', obj) instead of
+// testServer.post('http://localhost:port/echo', obj).
+//
 function wrapVerbs(testServer, base, ports) {
   const parts = base.split(':');
   const protocol = parts[0];

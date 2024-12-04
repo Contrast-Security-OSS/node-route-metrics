@@ -76,6 +76,7 @@ class HeaderChecker extends BaseChecker {
       EVENTLOOP: false,
       EVENTLOOP_RESOLUTION: 20,
       GARBAGE_COLLECTION: false,
+      LOG_ALL_LOADS: false,
     };
 
     // always set these because a test might change them.
