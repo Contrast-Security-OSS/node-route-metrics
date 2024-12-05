@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "simple.js",
+  "type": "commonjs",
   "keywords": [],
   "author": "",
   "license": "ISC"
