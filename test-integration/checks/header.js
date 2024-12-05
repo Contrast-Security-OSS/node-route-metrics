@@ -4,13 +4,15 @@ const os = require('os');
 const expect = require('chai').expect;
 
 const BaseChecker = require('./_base');
+// this is a bit of a hack, but it's the easiest way to get the version.
+const {version} = require('../../package.json');
 
 /**
  * checkHeader() checks to see if the header is correct. It duplicates much of
  * the code for writing the header.
  */
 const _expected = {
-  version: '1.0.0',
+  version,
   argv: process.argv,
   node_version: process.version,
   os: {},
