@@ -91,7 +91,7 @@ class PatchChecker extends BaseChecker {
       // no agent, so http and/or https are the only patch entries.
       //
       // both the node-agent and express require http, so it will be present
-      const expressPresent = t.server === 'express';
+      const expressPresent = t.server === 'express.cjs' || t.server === 'express.mjs';
       if (t.loadProtos.includes('http') || expressPresent) {
         patchNames.push('http');
       }

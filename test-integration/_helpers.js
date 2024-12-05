@@ -39,7 +39,7 @@ function makeTestGenerator(opts) {
   const options = Object.assign({}, defaultOptions, opts);
   const {getEnv, routeMetrics, basePort} = options;
 
-  const server = {server: ['simple', 'express']};
+  const server = {server: ['simple.cjs', 'express.cjs', 'express.mjs']};
 
   // load: [load these], fetch: access using this
   const protocolPair = {protocolPair: [
@@ -118,7 +118,7 @@ class Test {
 
     const {server, nodeArgs, appArgs, base} = this;
 
-    const absoluteServerPath = path.resolve(`./test/servers/${server}.cjs`);
+    const absoluteServerPath = path.resolve(`./test/servers/${server}`);
     const nodeargs = [...nodeArgs, absoluteServerPath, ...appArgs];
     const env = Object.assign({}, process.env, this.env);
     const testServer = new Server(nodeargs, {env});
