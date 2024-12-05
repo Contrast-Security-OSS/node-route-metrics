@@ -31,7 +31,7 @@ $ node --import @contrast/route-metrics -r @contrast/agent my-web-server.js
 ```
 
 This allows server performance, exclusive of network time, to be compared
-with and without other packages installed. `route-metrics` writes to a json
+with and without other packages installed. `route-metrics` writes a json
 log file, `route-metrics.log` by default.
 
 ## processing the log file
