@@ -48,7 +48,7 @@ let verbose = false;
 const args = process.argv.slice(2);
 
 // if the user specifies a server, then start it here.
-let server;
+let server = 'cjs';
 // routes are specified by the ep without the leading slash
 const requests = [];
 for (let i = 0; i < args.length; i++) {
