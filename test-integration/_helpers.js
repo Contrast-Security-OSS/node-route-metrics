@@ -7,25 +7,27 @@ const util = require('util');
 const semver = require('semver');
 
 const Server = require('../test/servers/server');
-const {AGENTS} = require('../lib/patcher');
+const AGENTS = ['@contrast/agent'];
 
 const defaultEnv = {
   CONTRAST_DEV: true,
   CSI_EXPOSE_CORE: true,
 };
 
-const defaultOptions = {
-  getEnv: (env) => [env],
-  routeMetrics: './lib/index.js',
-  useEmptyNodeArgs: false,
-  addPatchLogEntries: true,
-  basePort: 8888,
-};
-
 let loader = '--import';
+let routeMetrics = './lib/index-esm.mjs';
 if (semver.satisfies(process.versions.node, '<=18.19.0')) {
   loader = '-r';
+  routeMetrics = './lib/index-cjs.cjs';
 }
+
+const defaultOptions = {
+  getEnv: (env) => [env],
+  routeMetrics,
+  useEmptyNodeArgs: false,
+  addPatchLogEntries: true,
+  basePort: 0,
+};
 
 //
 // makeTestGenerator() returns a generator function that returns tests
@@ -37,7 +39,7 @@ function makeTestGenerator(opts) {
   const options = Object.assign({}, defaultOptions, opts);
   const {getEnv, routeMetrics, basePort} = options;
 
-  const server = {server: ['simple', 'express']};
+  const server = {server: ['simple.cjs', 'express.cjs', 'express.mjs']};
 
   // load: [load these], fetch: access using this
   const protocolPair = {protocolPair: [
@@ -50,7 +52,7 @@ function makeTestGenerator(opts) {
   const nodeArgs = {nodeArgs: [
     {desc: 'nothing', args: []},
     {desc: 'route-metrics only', args: [loader, routeMetrics]},
-    {desc: 'route-metrics + node agent', args: [loader, routeMetrics, loader, '@contrast/agent']},
+    {desc: 'route-metrics + agent', args: [loader, routeMetrics, loader, '@contrast/agent']},
     //{desc: 'route-metrics + node mono', args: ['-r', routeMetrics, '-r', '@contrast/protect-agent']},
     //{desc: 'route-metrics + rasp-v3', args: ['-r', routeMetrics, '-r', '@contrast/rasp-v3']},
   ]};
@@ -74,7 +76,7 @@ function makeTestGenerator(opts) {
 class Test {
   constructor(testDefinition, {basePort}) {
     // save port before reducing the testDefinition.
-    let port = basePort;
+    const port = basePort;
     const t = testDefinition.reduce((consol, single) => Object.assign(consol, single), {});
     // rearrange and augment the test
     t.protocol = t.protocolPair.fetch;
@@ -93,7 +95,8 @@ class Test {
       if (p === t.protocol) {
         t.base = `${p}://localhost:${port}`;
       }
-      return `${p}:localhost:${port++}`;
+      const port2 = port === 0 ? port : port + 1;
+      return `${p}:localhost:${port2}`;
     });
     if (!t.base) {
       throw new Error(`loadProtos ${t.loadProtos.join(', ')} doesn't contain ${t.protocol}`);
@@ -143,6 +146,12 @@ function removeDefaultEnv(env) {
   return e;
 }
 
+//
+// wraps the server's post and get methods with a function that adds the base
+// URL with the correct protocol (http or https), hostname, and port. this
+// allows tests to just call testServer/post('/echo', obj) instead of
+// testServer.post('http://localhost:port/echo', obj).
+//
 function wrapVerbs(testServer, base, ports) {
   const parts = base.split(':');
   const protocol = parts[0];

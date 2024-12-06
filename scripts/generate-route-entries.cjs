@@ -48,7 +48,7 @@ let verbose = false;
 const args = process.argv.slice(2);
 
 // if the user specifies a server, then start it here.
-let server;
+let server = 'cjs';
 // routes are specified by the ep without the leading slash
 const requests = [];
 for (let i = 0; i < args.length; i++) {
@@ -57,9 +57,9 @@ for (let i = 0; i < args.length; i++) {
     continue;
   }
   if (args[i] === '-s' || args[i] === '--server') {
-    if (args[i + 1] !== 'express' && args[i + 1] !== 'simple') {
+    if (args[i + 1] !== 'cjs' && args[i + 1] !== 'mjs') {
       // eslint-disable-next-line no-console
-      console.error('server must be express or simple');
+      console.error('server must be cjs or mjs');
       process.exit(1);
     }
     server = args[++i];
@@ -216,7 +216,7 @@ async function start() {
     return Promise.resolve();
   }
   // eslint-disable-next-line no-console
-  console.log('starting server', server);
+  console.log(`starting server: express.${server}`);
 
   const options = {
     env: process.env,
@@ -225,7 +225,7 @@ async function start() {
   const url = new URL(host);
   // the protocol includes the trailing colon
   const appArg = [`${url.protocol}${url.hostname}:${url.port}`];
-  const nodeargs = ['-r', '.', './test/servers/express.js', appArg];
+  const nodeargs = ['--import', './lib/index-esm.mjs', `./test/servers/express.${server}`, appArg];
   server = new Server(nodeargs, options);
   return server.readyPromise;
 }

@@ -1,0 +1,37 @@
+import fetch, * as all from 'node-fetch';
+
+let patched = all;
+if (!Object.isExtensible(all)) {
+  const objectDesc = Object.getOwnPropertyDescriptors(all);
+
+  for (const key in objectDesc) {
+    if (key === 'isRedirect') {
+      objectDesc[key].value = function() {
+        return 'i-am-redirect';
+      };
+    }
+  }
+  const proto = Object.getPrototypeOf(all) || null;
+  patched = Object.create(proto, objectDesc);
+} else {
+  // simpler patching, but i don't think this can happen.
+  throw new Error('node-fetch module object is not sealed');
+}
+
+export default fetch;
+
+export const {
+  AbortError,
+  Blob,
+  FetchError,
+  File,
+  FormData,
+  Headers,
+  Request,
+  Response,
+  blobFrom,
+  blobFromSync,
+  fileFrom,
+  fileFromSync,
+  isRedirect,
+} = patched;

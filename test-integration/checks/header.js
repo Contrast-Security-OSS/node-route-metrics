@@ -4,13 +4,15 @@ const os = require('os');
 const expect = require('chai').expect;
 
 const BaseChecker = require('./_base');
+// this is a bit of a hack, but it's the easiest way to get the version.
+const {version} = require('../../package.json');
 
 /**
  * checkHeader() checks to see if the header is correct. It duplicates much of
  * the code for writing the header.
  */
 const _expected = {
-  version: '1.0.0',
+  version,
   argv: process.argv,
   node_version: process.version,
   os: {},
@@ -44,7 +46,7 @@ class HeaderChecker extends BaseChecker {
 
   check(entry, context) {
     expect(context.index).equal(0, `header must be first entry, not index ${context.index}`);
-    const expected = Object.assign({}, _expected, {os: _os}, {package_json: this.pdj});
+    const expected = Object.assign({}, _expected, {os: _os}, {package_json: this.pdj, app_dir: '.'});
     // set some things that change quickly to just match
     const {freemem, loadavg, uptime} = entry.os;
     expect(freemem).a('number');
@@ -76,6 +78,7 @@ class HeaderChecker extends BaseChecker {
       EVENTLOOP: false,
       EVENTLOOP_RESOLUTION: 20,
       GARBAGE_COLLECTION: false,
+      LOG_ALL_LOADS: 0,
     };
 
     // always set these because a test might change them.
