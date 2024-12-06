@@ -1,8 +1,8 @@
 'use strict';
 
-const Server = require('./skeleton');
+const Skeleton = require('./skeleton');
 
-const {agent, tracker} = Server.getAgentGlobals();
+const {agent, tracker} = Skeleton.getAgentGlobals();
 
 function app(req, res) {
   res.statusCode = 200;
@@ -91,14 +91,17 @@ function dispatch(req, res, body) {
 
 let options;
 if (process.argv.length > 2) {
-  const protocols = Server.getProtocols(process.argv.slice(2));
+  const protocols = Skeleton.getProtocols(process.argv.slice(2));
   options = {protocols};
 }
-const server = new Server(app, options);
+const server = new Skeleton(app, options);
 
 server.start()
   .then(n => {
+    let ports = '';
+    ports += options.protocols.http?.port ? `:${options.protocols.http.port}` : ':';
+    ports += options.protocols.https?.port ? `:${options.protocols.https.port}` : ':';
     // eslint-disable-next-line no-console
-    console.log(process.pid);
+    console.log(process.pid + ports);
   });
 

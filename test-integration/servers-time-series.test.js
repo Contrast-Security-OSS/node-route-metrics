@@ -1,30 +1,22 @@
 'use strict';
 
-//
-// this test module is the last one written and uses better logic than the
-// other server-log testing modules.
-// - waits for specific sets of log entries as opposed to a line count
-// - doesn't require log entries to be in a specific order
-// - can ignore duplicate log entries (gc, eventloop)
-//
+const path = require('node:path');
 
-const fsp = require('fs').promises;
-const path = require('path');
-
-const fetch = require('node-fetch');
 const {expect} = require('chai');
 
-const Server = require('../test/servers/server');
-const {makeTestGenerator} = require('../test/helpers');
+const {makeTestGenerator} = require('./_helpers.js');
 const {
-  checks,
-  makeLogEntryChecker,
-  makeMetricsChecker,
-  makePatchEntryCheckers,
-  makeTimeSeriesCheckers,
-} = require('../test/checks');
+  Checkers,
+  HeaderChecker,
+  PatchChecker,
+  RouteChecker,
+  GcChecker,
+  EventloopChecker,
+  ProcChecker,
+} = require('./checks/index.js');
 
 const pdj = require('../test/servers/package.json');
+const app_dir = path.resolve(__dirname, '../test/servers');
 
 // get helpful output when true and tests fail
 const debugging = false;
@@ -50,40 +42,34 @@ const argv = process.argv;
 describe('server time-series tests', function() {
   for (const t of tests()) {
     let testServer;
+
     // construct expected config based on the test's environment vars
-    const expectedLogEntries = [];
     const overrides = {
+      app_dir,
       config: {
         GARBAGE_COLLECTION: !!t.env.CSI_RM_GARBAGE_COLLECTION,
         EVENTLOOP: !!t.env.CSI_RM_EVENTLOOP,
       },
     };
 
-    const {server, base, desc, nodeArgs, appArgs} = t;
-    // only need these in combination with doing POSTs and GETs
+    const {desc} = t;
+
+    const expectedGcCount = t.env.CSI_RM_GARBAGE_COLLECTION ? 1 : 0;
+    const expectedEventloopCount = t.env.CSI_RM_EVENTLOOP ? 1 : 0;
 
     describe(desc, function() {
       this.timeout(10000);
       let lastArgs;
+      let lastLogLines;
+
+      let checkers;
       //
       // start the server
       //
       before(async function() {
         // don't wait so long
         process.env.CSI_ROUTE_METRICS_TIME_SERIES_INTERVAL = 100;
-        return fsp.unlink('route-metrics.log')
-          .catch(e => null)
-          .then(() => {
-            const absoluteServerPath = path.resolve(`./test/servers/${server}`);
-            const nodeargs = [...nodeArgs, absoluteServerPath, ...appArgs];
-            lastArgs = nodeargs;
-            const env = Object.assign({}, process.env, t.env);
-            testServer = new Server(nodeargs, {env});
-            // make argv match what the server will see.
-            process.argv = [process.argv[0], absoluteServerPath, ...appArgs];
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-            return testServer.readyPromise;
-          });
+        testServer = await t.setup();
       });
 
       after(async function() {
@@ -107,22 +93,21 @@ describe('server time-series tests', function() {
       });
 
       beforeEach(function() {
-        // ignore the log entries created by the test generator. they do not
-        // take header overrides into account; the original implementation
-        // still works but should be replaced by explicit construction of the
-        // expected log entries.
-        expectedLogEntries.length = 0;
-        const o = Object.assign({execArgv: t.nodeArgs}, overrides);
-        expectedLogEntries.push(makeLogEntryChecker('header', pdj, o));
-        expectedLogEntries.push(...makePatchEntryCheckers(t));
+        const augmentedOverrides = Object.assign({execArgv: t.nodeArgs}, overrides);
+        const requiredPatches = PatchChecker.getMinimalPatchEntries(t);
+
+        checkers = new Checkers({initialCheckers: [
+          {CheckerClass: HeaderChecker, constructorArgs: [pdj, augmentedOverrides]},
+          {CheckerClass: PatchChecker, constructorArgs: [{requiredPatches}]},
+        ]});
       });
 
       afterEach(function() {
         // if a test failed make it easier to debug how the server was created
-        if (this.currentTest.state === 'failed' && debugging) {
-          // eslint-disable-next-line no-console
+        if (debugging && this.currentTest.state === 'failed') {
+          /* eslint-disable no-console */
           console.log('new Server(', lastArgs, ')');
-        }
+          console.log('lastLogLines:', lastLogLines);}
       });
 
       //
@@ -130,162 +115,75 @@ describe('server time-series tests', function() {
       //
       it('header, patch, and time-series entries are all correct', async function() {
         this.timeout(12000);
-        const {checkers: timeSeriesEntries, gc, eventloop, proc} = makeTimeSeriesCheckers(t);
-        const typesNeeded = {
-          header: 1,
-          patch: expectedLogEntries.length - 1,
-          gc,
-          eventloop,
-          proc
-        };
-        const linesNeeded = expectedLogEntries.length + timeSeriesEntries.length;
+
+        const gcChecker = new GcChecker({requiredEntries: expectedGcCount});
+        const eventloopChecker = new EventloopChecker({requiredEntries: expectedEventloopCount});
+        const procChecker = new ProcChecker();
+        checkers.add(gcChecker);
+        checkers.add(eventloopChecker);
+        checkers.add(procChecker);
 
         const options = {maxWaitTime: 10000};
-        const {lines: logLines} = await checks.waitForLines(typesNeeded, options);
+        const {lines, numberOfLinesNeeded} = await checkers.waitForLogLines(options);
+        lastLogLines = lines;
 
-        if (debugging && logLines.length < linesNeeded) {
-          // eslint-disable-next-line no-console
-          console.log(logLines);
+        const logObjects = lines.map(line => JSON.parse(line));
+        // change to use allFound flag.
+        expect(lines.length).gte(numberOfLinesNeeded, 'not enough lines');
+
+        checkers.check(logObjects);
+
+        const gcCount = gcChecker.getCount();
+        if (expectedGcCount) {
+          const message = `expected ${expectedGcCount} gc entries, got ${gcCount}`;
+          expect(gcCount).gte(expectedGcCount, message);
+        } else {
+          expect(gcCount).equal(0, `found ${gcCount} gc entries, expected 0`);
         }
-
-        const logObjects = logLines.map(line => JSON.parse(line));
-        // make sure all header and patch entries are present
-        expect(logLines.length).gte(linesNeeded, 'not enough lines');
-
-        for (let i = 0; i < expectedLogEntries.length; i++) {
-          expect(expectedLogEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
-          const {validator} = expectedLogEntries[i];
-          expect(logObjects[i]).property('type').equal(expectedLogEntries[i].type);
-          validator(logObjects[i].entry);
-        }
-
-        // time series can appear multiple times
-        const tsEntries = {};
-        for (const ts of timeSeriesEntries) {
-          tsEntries[ts.type] = ts;
-        }
-
-        // only check the remaining items (time-series)
-        const remaining = logObjects.slice(expectedLogEntries.length);
-
-        // allows time-series and metrics to be interleaved and in any order.
-        // probably a candidate for a utility function so it can be applied
-        // to other tests.
-        for (const entry of remaining) {
-          if (entry.type in tsEntries) {
-            tsEntries[entry.type].validator(entry.entry);
-          } else {
-            throw new Error('unexpected entry type');
-          }
+        const elCount = eventloopChecker.getCount();
+        if (expectedEventloopCount) {
+          const message = `expected ${expectedEventloopCount} eventloop entries, got ${elCount}`;
+          expect(elCount).gte(expectedEventloopCount, message);
+        } else {
+          expect(elCount).equal(0, `found ${elCount} eventloop entries, expected 0`);
         }
       });
 
       it('post and get entries are present with time-series entries', async function() {
-        const {checkers: timeSeriesEntries, gc, eventloop} = makeTimeSeriesCheckers(t);
+        const gcChecker = new GcChecker({requiredEntries: expectedGcCount});
+        checkers.add(gcChecker);
 
-        const metricsEntries = [
-          makeMetricsChecker('post', '/echo'),
-          makeMetricsChecker('post', '/meta'),
-          makeMetricsChecker('get', '/info'),
+        const eventloopChecker = new EventloopChecker({requiredEntries: expectedEventloopCount});
+        checkers.add(eventloopChecker);
+
+        const routesToCheck = [
+          {method: 'POST', path: '/echo'},
+          {method: 'POST', path: '/meta'},
+          {method: 'GET', path: '/info'},
         ];
+        const routeCheckerOptions = {
+          routesToCheck,
+          allowDuplicates: false,
+          allowUnknownRoutes: false,
+        };
+        const routeChecker = new RouteChecker(routeCheckerOptions);
+        checkers.add(routeChecker);
 
         // now execute some requests
         const obj = {cat: 'tuna', dog: 'beef', snake: 'mouse'};
-        post(`${base}/echo`, obj);
-        post(`${base}/meta`, obj);
-        get(`${base}/info`);
-
-        const typesNeeded = {
-          header: 1,
-          patch: expectedLogEntries.length - 1,
-          metrics: metricsEntries.length,
-          gc,
-          eventloop,
-        };
+        testServer.post('/echo', obj);
+        testServer.post('/meta', obj);
+        testServer.get('/info');
 
         const options = {maxWaitTime: 3500};
-        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded, options);
+        const {lines, numberOfLinesNeeded} = await checkers.waitForLogLines(options);
+        lastLogLines = lines;
 
-        if (debugging && logLines.length < linesNeeded) {
-          // eslint-disable-next-line no-console
-          console.log(logLines);
-        }
+        expect(lines.length).gte(numberOfLinesNeeded, 'not enough lines');
+        const logObjects = lines.map(line => JSON.parse(line));
 
-        expect(logLines.length).gte(linesNeeded, 'not enough lines');
-        const logObjects = logLines.map(line => JSON.parse(line));
-
-        for (let i = 0; i < expectedLogEntries.length; i++) {
-          expect(expectedLogEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
-          const {validator} = expectedLogEntries[i];
-          expect(logObjects[i]).property('type').equal(expectedLogEntries[i].type);
-          validator(logObjects[i].entry);
-        }
-
-        // one time for each of these
-        const metricsEntriesLeft = {};
-        for (const me of metricsEntries) {
-          metricsEntriesLeft[`${me.method}${me.pathEnd}`] = me;
-        }
-        // multiple times for these
-        const tsEntries = {};
-        for (const ts of timeSeriesEntries) {
-          tsEntries[ts.type] = ts;
-        }
-
-
-        // only check the remaining items (time-series and metrics)
-        const remaining = logObjects.slice(expectedLogEntries.length);
-
-        // allows time-series and metrics to be interleaved and in any order.
-        // probably a candidate for a utility function so it can be applied
-        // to other tests.
-        for (const entry of remaining) {
-          if (entry.type in tsEntries) {
-            tsEntries[entry.type].validator(entry.entry);
-          } else if (entry.type === 'route') {
-            const me = `${entry.entry.method.toLowerCase()}${entry.entry.url}`;
-            if (me in metricsEntriesLeft) {
-              delete metricsEntriesLeft[me];
-            } else if (debugging) {
-              // eslint-disable-next-line no-console
-              console.log(`unexpected metrics entry: ${me}`);
-            }
-          } else {
-            throw new Error('unexpected entry type');
-          }
-        }
-        const leftoverKeys = Object.keys(metricsEntriesLeft);
-        expect(leftoverKeys).eql([], `metrics not found ${leftoverKeys.join(',')}`);
+        checkers.check(logObjects);
       });
     });
   }
 });
-
-async function post(url, obj) {
-  const options = {
-    method: 'post',
-    body: JSON.stringify(obj),
-    headers: {'content-type': 'application/json'}
-  };
-  return fetch(url, options)
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(res.statusText);
-      }
-      return res;
-    })
-    .then(res => res.json());
-}
-
-async function get(url) {
-  const options = {
-    method: 'get'
-  };
-  return fetch(url, options)
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(`${res.status} ${res.statusText}`);
-      }
-      return res;
-    });
-}
