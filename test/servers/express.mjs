@@ -1,5 +1,3 @@
-'use strict';
-
 //const Server = require('./skeleton');
 const Server = (await import('./skeleton.js')).default;
 
