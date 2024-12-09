@@ -156,6 +156,9 @@ const server = new Server(app, options);
 
 server.start()
   .then(n => {
+    let ports = '';
+    ports += options.protocols.http?.port ? `:${options.protocols.http.port}` : ':';
+    ports += options.protocols.https?.port ? `:${options.protocols.https.port}` : ':';
     // eslint-disable-next-line no-console
-    console.log(process.pid);
+    console.log(process.pid + ports);
   });

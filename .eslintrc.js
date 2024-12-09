@@ -108,5 +108,14 @@ module.exports = {
     'no-new-symbol': 2,
     'no-this-before-super': 2,
     'prefer-const': 2
-  }
+  },
+  overrides: [
+    {
+      files: ['**/*.mjs'],
+      parserOptions: {
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+    },
+  ],
 };

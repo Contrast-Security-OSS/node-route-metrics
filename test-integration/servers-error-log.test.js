@@ -1,16 +1,20 @@
 'use strict';
 
-const fs = require('fs');
-const fsp = fs.promises;
-const path = require('path');
+const path = require('node:path');
 
 const {expect} = require('chai');
 
-const Server = require('../test/servers/server');
-const {makeTestGenerator} = require('../test/helpers');
-const {checks, makeLogEntryChecker, makePatchEntryCheckers} = require('../test/checks');
+const {makeTestGenerator} = require('./_helpers');
+
+const {
+  Checkers,
+  HeaderChecker,
+  PatchChecker,
+  CustomChecker,
+} = require('./checks');
 
 const pdj = require('../test/servers/package.json');
+const app_dir = path.resolve(__dirname, '../test/servers');
 
 function getEnv() {
   return [{
@@ -33,42 +37,30 @@ describe('server error log tests', function() {
   // combination specified.
   //
   for (const t of tests()) {
-    const {server} = t;
-    const env = Object.assign({}, process.env, t.env);
+    let testServer;
+    let checkers;
+    const {desc} = t;
 
-    // build the array of expected log entries.
-    const overrides = {execArgv: t.nodeArgs};
-    const logEntries = [makeLogEntryChecker('header', pdj, overrides)];
-    logEntries.push(makeLogEntryChecker('unknown-config-items'));
-    const patchEntries = makePatchEntryCheckers(t);
-    logEntries.push(...patchEntries);
-
-    describe(t.desc, function() {
-      let testServer;
+    describe(desc, function() {
       this.timeout(10000);
+      let lastArgs;
+      let lastLogLines;
       //
       // start the server
       //
       before(async function() {
-        return fsp.unlink('route-metrics.log')
-          .catch(e => null)
-          .then(() => {
-            const absoluteServerPath = path.resolve(`./test/servers/${server}`);
-            const nodeargs = [...t.nodeArgs, absoluteServerPath, ...t.appArgs];
-            testServer = new Server(nodeargs, {env});
-            // make argv match what the server will see.
-            process.argv = [process.argv[0], absoluteServerPath, ...t.appArgs];
-            process.env.NODE_TLS_REJECT_UNAUTHORIZED = 0;
-            return testServer.readyPromise;
-          });
+        testServer = await t.setup();
+        lastArgs = t.nodeArgs;
       });
 
       after(async function() {
+        const code = 'SIGKILL';
         if (!previousTLS) {
           delete process.env.NODE_TLS_REJECT_UNAUTHORIZED;
         }
-
-        const code = 'SIGKILL';
+        // SIGTERM didn't work with istanbul but adding a stop endpoint
+        // did. but that doesn't work with https and SIGKILL does.
+        //return testServer.stop({type: 'url', value: `${base}/stop/0`})
         return testServer.stop({type: 'signal', value: code})
           .then(signal => {
             // reset argv
@@ -85,37 +77,43 @@ describe('server error log tests', function() {
           });
       });
 
+      beforeEach(function() {
+        const overrides = {execArgv: t.nodeArgs, app_dir};
+        const requiredPatches = PatchChecker.getMinimalPatchEntries(t);
+
+        // all tests check for the header and patch entries
+        const initialCheckers = [
+          {CheckerClass: HeaderChecker, constructorArgs: [pdj, overrides]},
+          {CheckerClass: PatchChecker, constructorArgs: [{requiredPatches}]},
+        ];
+        checkers = new Checkers({initialCheckers});
+      });
+
       afterEach(function() {
-        if (this.currentTest.state !== 'failed' || !process.env.RM_DEBUG_TESTS) {
-          return;
+        // if a test failed make it easier to debug how the server was created
+        if (false && this.currentTest.state === 'failed') {
+          /* eslint-disable no-console */
+          console.log('new Server(', lastArgs, ')');
+          console.log('logLines', lastLogLines);
+          //const opts = {depth: 10, colors: false};
+          /* eslint-enable no-console */
         }
-        const file = fs.readFileSync('route-metrics.log', 'utf8');
-        const patches = file.split('\n').filter(line => line).map(JSON.parse).filter(line => line.type === 'patch');
-        // eslint-disable-next-line no-console
-        console.log(patches);
       });
 
       //
       // the test
       //
       it('header and patch entries are present after startup', async function() {
-        const typesNeeded = {
-          header: 1,
-          patch: patchEntries.length,
-          'unknown-config-items': 1
-        };
-        const {lines: logLines, linesNeeded} = await checks.waitForLines(typesNeeded);
+        const unknownConfigChecker = new CustomChecker({type: 'unknown-config-items'});
+        checkers.add(unknownConfigChecker);
+        const {lines, numberOfLinesNeeded} = await checkers.waitForLogLines();
 
         // make sure all header and patch entries are present
-        expect(logLines.length).gte(linesNeeded, 'not enough lines');
-        const logObjects = logLines.map(line => JSON.parse(line));
+        expect(lines.length).gte(numberOfLinesNeeded, 'not enough lines');
+        const logObjects = lines.map(line => JSON.parse(line));
 
-        for (let i = 0; i < logEntries.length; i++) {
-          expect(logEntries[i]).property('validator').a('function', `$missing validator index ${i}`);
-          const {validator} = logEntries[i];
-          expect(logObjects[i]).property('type').equal(logEntries[i].type);
-          validator(logObjects[i].entry);
-        }
+        checkers.check(logObjects);
+        expect(unknownConfigChecker.getCount()).equal(1);
       });
 
     });

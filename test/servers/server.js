@@ -1,6 +1,7 @@
 'use strict';
 
 const child_process = require('child_process');
+const fetch = require('node-fetch');
 
 class Server {
   constructor(args, options = {}) {
@@ -27,13 +28,21 @@ class Server {
         }
         // wait to see the pid output. by test convention that's when
         // the callback of server.listen() has been called.
-        if (/^\d+\n$/.test(s)) {
+        // previously was pid alone, now is pid:http-port:https-port but one
+        // port can be empty (not both).
+        const m = s.match(/^\d+:(?<http>\d*):(?<https>\d*)\n$/);
+        if (m) {
           this.havePid = true;
-          resolve();
+          if (!m.groups.http && !m.groups.https) {
+            reject(new Error('no ports'));
+          }
+
+          resolve({http: +m.groups.http, https: +m.groups.https});
         } else {
           if (Server.isAgentStartupNoise(s)) {
             return;
           }
+
           reject(new Error(`unexpected output "${s.slice(0, -1)}"`));
         }
       });
@@ -61,12 +70,12 @@ class Server {
   //
   // https://github.com/istanbuljs/nyc/issues/762
   //
-  stop({type, value} = {type: 'signal', value: 'SIGTERM'}) {
+  async stop({type, value} = {type: 'signal', value: 'SIGTERM'}) {
     // if it didn't exit on its own, kill it.
     if (typeof this.exitCode !== 'number') {
       // if the type is an url then post to that url.
       if (type === 'url') {
-        post(value, {});
+        this.post(value, {});
       } else if (type === 'signal') {
         this.cp.kill(value);
       }
@@ -122,26 +131,35 @@ class Server {
     return false;
   }
 
+  async post(url, obj) {
+    const options = {
+      method: 'post',
+      body: JSON.stringify(obj),
+      headers: {'content-type': 'application/json'}
+    };
+    return fetch(url, options)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(res.statusText);
+        }
+        return res;
+      })
+      .then(res => res.json());
+  }
+
+  async get(url) {
+    const options = {
+      method: 'get'
+    };
+    return fetch(url, options)
+      .then(res => {
+        if (!res.ok) {
+          throw new Error(`${res.status} ${res.statusText}`);
+        }
+        return res;
+      });
+  }
+
 }
-
-let fetch;
-
-async function post(url, obj) {
-  const options = {
-    method: 'post',
-    body: JSON.stringify(obj),
-    headers: {'content-type': 'application/json'}
-  };
-  fetch = fetch || require('node-fetch');
-  return fetch(url, options)
-    .then(res => {
-      if (!res.ok) {
-        throw new Error(res.statusText);
-      }
-      return res;
-    })
-    .then(res => res.json());
-}
-
 
 module.exports = Server;

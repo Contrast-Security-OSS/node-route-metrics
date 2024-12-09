@@ -4,5 +4,7 @@ cache/
 .nyc_output/
 contrast_effective_config.json
 contrast_system_info.json
+# swc compiler cache
 .swc/
+# rewrite cache
 .contrast/
