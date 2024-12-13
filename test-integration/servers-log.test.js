@@ -11,6 +11,7 @@ const {
   HeaderChecker,
   PatchChecker,
   RouteChecker,
+  LoadChecker
 } = require('./checks');
 
 const pdj = require('../test/servers/package.json');
@@ -126,6 +127,9 @@ describe('server log tests', function() {
         const routeChecker = new RouteChecker(routeCheckerOptions);
         checkers.add(routeChecker);
 
+        const loadChecker = new LoadChecker();
+        checkers.add(loadChecker);
+
         const obj = {cat: 'tuna', dog: 'beef', snake: 'mouse'};
         await testServer.post('/echo', obj);
         await testServer.post('/meta', obj);
@@ -144,6 +148,8 @@ describe('server log tests', function() {
 
         checkers.check(logObjects);
         expect(routeChecker.getCount()).equal(3);
+
+        expect(loadChecker.getCount()).equal(0, 'no load entries should be present');
       });
 
       it('do not write a record if end() is not called', async function() {
