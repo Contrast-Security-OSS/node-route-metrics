@@ -217,7 +217,7 @@ if (!module.parent) {
     // eslint-disable-next-line no-console
     console.log(c.reduce((consol, single) => Object.assign(consol, single), {}));
   }
-  function getEnv() {return [{bruce: 'wenxin'}]}
+  function getEnv() {return [{bruce: 'heihei'}, {bruce: 'yinyin'}]}
 
   const g = makeTestGenerator({getEnv, addPatchLogEntries: true});
   for (const t of g()) {
