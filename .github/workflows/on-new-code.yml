@@ -2,7 +2,7 @@ name: on-new-code
 on:
   push:
     branches:
-      - master
+      - main
   pull_request:
     branches: '*'
 jobs:
@@ -25,11 +25,3 @@ jobs:
       run: npm install
     - name: Run tests
       run: npm test
-#    - if: matrix.node-version == 14
-#      name: generate code coverage
-#      run: npm run test:ci
-#    - if: matrix.node-version == 14
-#      name: send coverage to codecov
-#      uses: codecov/codecov-action@v1
-#      with:
-#        token: ${{ secrets.CODECOV_TOKEN}}

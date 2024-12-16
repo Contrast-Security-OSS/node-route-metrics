@@ -135,6 +135,7 @@ module.exports = {
   Checkers,
   HeaderChecker: require('./header'),
   PatchChecker: require('./patch'),
+  LoadChecker: require('./load'),
   RouteChecker: require('./route'),
   ProcChecker: require('./proc'),
   GcChecker: require('./gc'),

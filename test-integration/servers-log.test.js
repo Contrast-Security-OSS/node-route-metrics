@@ -11,12 +11,15 @@ const {
   HeaderChecker,
   PatchChecker,
   RouteChecker,
+  LoadChecker
 } = require('./checks');
 
 const pdj = require('../test/servers/package.json');
 const app_dir = path.resolve(__dirname, '../test/servers');
 
-const tests = makeTestGenerator({});
+const getEnv = (env) => [{CSI_RM_LOG_ALL_LOADS: 1}, {CSI_RM_LOG_ALL_LOADS: 0}].map(ev => Object.assign({}, env, ev));
+
+const tests = makeTestGenerator({getEnv});
 
 // for some reason v18 takes longer for the simple tests
 const v18 = semver.satisfies(process.version, '>=18.0.0 <19.0.0');
@@ -73,7 +76,11 @@ describe('server log tests', function() {
       });
 
       beforeEach(function() {
-        const overrides = {execArgv: t.nodeArgs, app_dir};
+        const overrides = {
+          execArgv: t.nodeArgs,
+          app_dir,
+          config: {LOG_ALL_LOADS: t.env.CSI_RM_LOG_ALL_LOADS},
+        };
         const requiredPatches = PatchChecker.getMinimalPatchEntries(t);
 
         // all tests check for the header and patch entries
@@ -126,6 +133,10 @@ describe('server log tests', function() {
         const routeChecker = new RouteChecker(routeCheckerOptions);
         checkers.add(routeChecker);
 
+        const requiredEntries = t.env.CSI_RM_LOG_ALL_LOADS == '0' ? 0 : 1;
+        const loadChecker = new LoadChecker({requiredEntries});
+        checkers.add(loadChecker);
+
         const obj = {cat: 'tuna', dog: 'beef', snake: 'mouse'};
         await testServer.post('/echo', obj);
         await testServer.post('/meta', obj);
@@ -144,6 +155,13 @@ describe('server log tests', function() {
 
         checkers.check(logObjects);
         expect(routeChecker.getCount()).equal(3);
+
+        // cheating, but all we care about is how it's set
+        if (t.env.CSI_RM_LOG_ALL_LOADS == '0') {
+          expect(loadChecker.getCount()).equal(0, 'no load entries should be present');
+        } else {
+          expect(loadChecker.getCount()).greaterThan(0, 'load entries should be present');
+        }
       });
 
       it('do not write a record if end() is not called', async function() {

@@ -34,6 +34,20 @@ This allows server performance, exclusive of network time, to be compared
 with and without other packages installed. `route-metrics` writes a json
 log file, `route-metrics.log` by default.
 
+### benchmarking
+
+A primary use case for `route-metrics` is benchmark performance of different
+configurations. Because the time-series data is written on intervals, it's
+possible that the last `proc`, `eventloop`, and `gc` entries will be before
+the last of the `route` entries in the log file, so they won't encompass the
+entire set of requests in the benchmark.
+
+Send a `SIGINT` signal to the node process and `route-metrics` will write the
+time-series data. It only listens for `SIGINT` once, but should get the signal
+before the application process does. This has been tested on Linux, not Macs.
+It does not work on Windows - the program gets the `SIGINT` on `^C`, but not
+when signaled via `childprocess.kill('SIGINT')`.
+
 ## processing the log file
 
 Once the `route-metrics` agent has been used to generate a log file, it's
