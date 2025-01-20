@@ -8,3 +8,5 @@ contrast_system_info.json
 .swc/
 # rewrite cache
 .contrast/
+output-?
+
