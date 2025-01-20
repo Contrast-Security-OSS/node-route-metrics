@@ -4,7 +4,7 @@
   "description": "",
   "main": "lib/index.js",
   "bin": {
-    "log-processor": "./lib/log-processor/index.js"
+    "log-processor": "./lib/log-processor/index.mjs"
   },
   "files": [
     "lib/",
@@ -17,7 +17,7 @@
     "prepare:default": "cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
     "test": "mocha --exclude 'node_modules/**/*' '**/*.test.js'",
     "test:cov": "nyc npm run test",
-    "log-processor": "node ./lib/log-processor/index.cjs"
+    "log-processor": "node ./lib/log-processor/index.mjs"
   },
   "keywords": [
     "metrics",
