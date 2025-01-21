@@ -1,0 +1,5 @@
+route, status, n, mean, stddev, percentiles: 0.5, 0.7, 0.8, 0.9, 0.95
+GET https://localhost:40419/info,200,1,4.00,0.00,4,4,4,4,4
+POST https://localhost:40419/echo,200,1,13.00,0.00,13,13,13,13,13
+POST https://localhost:40419/meta,200,1,5.00,0.00,5,5,5,5,5
+
