@@ -4,6 +4,10 @@
 
 ## Components of test/
 
+### app/ and esm-app/
+
+`app/` and `esm-app/` are used by `esm-hooks/get-file-type.test.mjs`.
+
 ### certs/
 
 `certs/` contains certs used by the servers. The certs are not signed so the `NODE_TLS_REJECT_UNAUTHORIZED` must be set to `'0'` (the tests do this).
@@ -11,6 +15,10 @@
 ### data/
 
 `data/` contains data that is used by the express server `create` endpoint.
+
+### log-files/
+
+`log-files/` contains log files and expected results for outputting each to csv and json.
 
 ### patcher/
 
