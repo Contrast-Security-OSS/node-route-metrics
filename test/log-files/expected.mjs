@@ -7,6 +7,14 @@ const dir = path.dirname(fileURLToPath(import.meta.url));
 
 export function fix(str) {
   if (os.type() === 'Windows_NT') {
+    const match = str.match(/(\d+) lines, (\d+) chars\)/);
+    if (match) {
+      const lines = parseInt(match[1], 10);
+      const chars = parseInt(match[2], 10);
+      const windowsChars = chars + lines - 1;
+      str.replace(`${lines} lines, ${chars} chars)`, `${lines} lines, ${windowsChars} chars)`);
+    }
+
     return str.replace(/\r\n/g, '\n');
   }
   return str;
