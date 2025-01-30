@@ -1,18 +1,17 @@
 import fsp from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
-import os from 'node:os';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
 
 export function fix(str, adjust = false) {
-  if (adjust) {
+  if (false && adjust && str.indexOf('\r' >= 0)) {
     const match = str.match(/(\d+) lines, (\d+) chars\)/);
     if (match) {
       const lines = parseInt(match[1], 10);
       const chars = parseInt(match[2], 10);
-      const windowsChars = chars + lines - 1;
-      str.replace(`${lines} lines, ${chars} chars)`, `${lines} lines, ${windowsChars} chars)`);
+      const windowsChars = chars + lines;
+      str = str.replace(`${lines} lines, ${chars} chars)`, `${lines} lines, ${windowsChars} chars)`);
     }
 
     return str.replace(/\r\n/g, '\n');
@@ -21,7 +20,7 @@ export function fix(str, adjust = false) {
 }
 
 function fx(str) {
-  return fix(str, os.type() === 'Windows_NT');
+  return fix(str, process.platform === 'win32');
 }
 
 //
@@ -83,8 +82,8 @@ export default {
       'nrwb-route-metrics.log': fx(nrwbCsvStdout),
     },
     file: {
-      'minimal-route-metrics.log': fx(minimalCsvFile),
-      'nrwb-route-metrics.log': fx(nrwbCsvFile),
+      'minimal-route-metrics.log': minimalCsvFile,
+      'nrwb-route-metrics.log': nrwbCsvFile,
     },
     fileStdout: {
       'minimal-route-metrics.log': fx(minimalCsvFileStdout),
@@ -98,8 +97,8 @@ export default {
       'nrwb-route-metrics.log': fx(nrwbJson),
     },
     file: {
-      'minimal-route-metrics.log': fx(minimalJson),
-      'nrwb-route-metrics.log': fx(nrwbJson),
+      'minimal-route-metrics.log': minimalJson,
+      'nrwb-route-metrics.log': nrwbJson,
     },
   },
 };
