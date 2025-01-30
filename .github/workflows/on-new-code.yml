@@ -14,6 +14,10 @@ jobs:
         node-version: [18, 20, 22]
     name: Test on ${{ matrix.os }} with node v${{ matrix.node-version }}
     steps:
+    - name: Setup git crlf
+      run: |
+        git config --global core.autocrlf false
+        git config --global core.eol lf
     - name: Setup Node.js ${{ matrix.node-version }}
       uses: actions/setup-node@v4
       with:
