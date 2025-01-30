@@ -7,7 +7,7 @@ const dir = path.dirname(fileURLToPath(import.meta.url));
 
 export function fix(str) {
   if (os.type() === 'Windows_NT') {
-    return str.replace(/\n/g, '\r\n');
+    return str.replace(/\r\n/g, '\n');
   }
   return str;
 }
