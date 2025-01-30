@@ -1,8 +1,16 @@
 import fsp from 'node:fs/promises';
 import {fileURLToPath} from 'node:url';
 import path from 'node:path';
+import os from 'node:os';
 
 const dir = path.dirname(fileURLToPath(import.meta.url));
+
+export function fix(str) {
+  if (os.type() === 'Windows_NT') {
+    return str.replace(/\n/g, '\r\n');
+  }
+  return str;
+}
 
 //
 // minimal route-metrics log
@@ -59,27 +67,27 @@ export default {
   // csv outputs informational lines to stdout, but not to files
   csv: {
     stdout: {
-      'minimal-route-metrics.log': minimalCsvStdout,
-      'nrwb-route-metrics.log': nrwbCsvStdout,
+      'minimal-route-metrics.log': fix(minimalCsvStdout),
+      'nrwb-route-metrics.log': fix(nrwbCsvStdout),
     },
     file: {
-      'minimal-route-metrics.log': minimalCsvFile,
-      'nrwb-route-metrics.log': nrwbCsvFile,
+      'minimal-route-metrics.log': fix(minimalCsvFile),
+      'nrwb-route-metrics.log': fix(nrwbCsvFile),
     },
     fileStdout: {
-      'minimal-route-metrics.log': minimalCsvFileStdout,
-      'nrwb-route-metrics.log': nrwbCsvFileStdout,
+      'minimal-route-metrics.log': fix(minimalCsvFileStdout),
+      'nrwb-route-metrics.log': fix(nrwbCsvFileStdout),
     }
   },
   // json is the same for both stdout and file
   json: {
     stdout: {
-      'minimal-route-metrics.log': minimalJson,
-      'nrwb-route-metrics.log': nrwbJson,
+      'minimal-route-metrics.log': fix(minimalJson),
+      'nrwb-route-metrics.log': fix(nrwbJson),
     },
     file: {
-      'minimal-route-metrics.log': minimalJson,
-      'nrwb-route-metrics.log': nrwbJson,
+      'minimal-route-metrics.log': fix(minimalJson),
+      'nrwb-route-metrics.log': fix(nrwbJson),
     },
   },
 };
