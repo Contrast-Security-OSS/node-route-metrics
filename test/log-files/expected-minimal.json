@@ -1,261 +1,259 @@
-[
-  {
-    "header": {
-      "ts": 1734980919275,
-      "type": "header",
+{
+  "header": {
+    "ts": 1734980919275,
+    "type": "header",
+    "tid": 0,
+    "entry": {
+      "version": "2.0.0",
+      "argv": [
+        "/home/bruce/.nvm/versions/node/v22.5.1/bin/node",
+        "/home/bruce/github/oss/route-metrics/test/servers/express.mjs",
+        "http:localhost:0",
+        "https:localhost:0"
+      ],
+      "execArgv": [
+        "--import",
+        "./lib/index-esm.mjs",
+        "--import",
+        "@contrast/agent"
+      ],
+      "node_version": "v22.5.1",
+      "os": {
+        "arch": "x64",
+        "hostname": "wsl",
+        "freemem": 19346538496,
+        "totalmem": 33495719936,
+        "getPriority": 0,
+        "loadavg": [
+          1.78,
+          0.82,
+          0.5
+        ],
+        "uptime": 1186296.02,
+        "type": "Linux",
+        "platform": "linux",
+        "release": "5.15.167.4-microsoft-standard-WSL2",
+        "version": "#1 SMP Tue Nov 5 00:21:55 UTC 2024",
+        "userInfo": {
+          "uid": 1000,
+          "gid": 1000,
+          "username": "bruce",
+          "homedir": "/home/bruce",
+          "shell": "/bin/bash"
+        },
+        "homedir": "/home/bruce",
+        "tmpdir": "/tmp",
+        "endianness": "LE",
+        "cpus": 8,
+        "cpuModel": "11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz",
+        "networkInterfaces": {
+          "lo": [
+            {
+              "address": "127.0.0.1",
+              "netmask": "255.0.0.0"
+            },
+            {
+              "address": "10.255.255.254",
+              "netmask": "255.255.255.255"
+            },
+            {
+              "address": "::1",
+              "netmask": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+            }
+          ],
+          "eth0": [
+            {
+              "address": "172.30.209.12",
+              "netmask": "255.255.240.0"
+            },
+            {
+              "address": "fe80::215:5dff:fe88:53cf",
+              "netmask": "ffff:ffff:ffff:ffff::"
+            }
+          ]
+        }
+      },
+      "package_json": {
+        "name": "servers",
+        "version": "1.0.0",
+        "description": "",
+        "main": "simple.js",
+        "type": "commonjs",
+        "keywords": [],
+        "author": "",
+        "license": "ISC"
+      },
+      "app_dir": "/home/bruce/github/oss/route-metrics/test/servers",
+      "config": {
+        "LOG_FILE": "route-metrics.log",
+        "OUTPUT_CONFIG": "",
+        "GARBAGE_COLLECTION": false,
+        "EVENTLOOP": true,
+        "EVENTLOOP_RESOLUTION": 20,
+        "LOG_ALL_LOADS": 0
+      }
+    }
+  },
+  "routes": [
+    [
+      "POST https://localhost:40419/echo",
+      {
+        "200": [
+          12724
+        ]
+      }
+    ],
+    [
+      "GET https://localhost:40419/info",
+      {
+        "200": [
+          4178
+        ]
+      }
+    ],
+    [
+      "POST https://localhost:40419/meta",
+      {
+        "200": [
+          4690
+        ]
+      }
+    ]
+  ],
+  "patches": [
+    {
+      "ts": 1734980919278,
+      "type": "patch",
       "tid": 0,
       "entry": {
-        "version": "2.0.0",
-        "argv": [
-          "/home/bruce/.nvm/versions/node/v22.5.1/bin/node",
-          "/home/bruce/github/oss/route-metrics/test/servers/express.mjs",
-          "http:localhost:0",
-          "https:localhost:0"
-        ],
-        "execArgv": [
-          "--import",
-          "./lib/index-esm.mjs",
-          "--import",
-          "@contrast/agent"
-        ],
-        "node_version": "v22.5.1",
-        "os": {
-          "arch": "x64",
-          "hostname": "wsl",
-          "freemem": 19346538496,
-          "totalmem": 33495719936,
-          "getPriority": 0,
-          "loadavg": [
-            1.78,
-            0.82,
-            0.5
-          ],
-          "uptime": 1186296.02,
-          "type": "Linux",
-          "platform": "linux",
-          "release": "5.15.167.4-microsoft-standard-WSL2",
-          "version": "#1 SMP Tue Nov 5 00:21:55 UTC 2024",
-          "userInfo": {
-            "uid": 1000,
-            "gid": 1000,
-            "username": "bruce",
-            "homedir": "/home/bruce",
-            "shell": "/bin/bash"
-          },
-          "homedir": "/home/bruce",
-          "tmpdir": "/tmp",
-          "endianness": "LE",
-          "cpus": 8,
-          "cpuModel": "11th Gen Intel(R) Core(TM) i7-1185G7 @ 3.00GHz",
-          "networkInterfaces": {
-            "lo": [
-              {
-                "address": "127.0.0.1",
-                "netmask": "255.0.0.0"
-              },
-              {
-                "address": "10.255.255.254",
-                "netmask": "255.255.255.255"
-              },
-              {
-                "address": "::1",
-                "netmask": "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
-              }
-            ],
-            "eth0": [
-              {
-                "address": "172.30.209.12",
-                "netmask": "255.255.240.0"
-              },
-              {
-                "address": "fe80::215:5dff:fe88:53cf",
-                "netmask": "ffff:ffff:ffff:ffff::"
-              }
-            ]
-          }
-        },
-        "package_json": {
-          "name": "servers",
-          "version": "1.0.0",
-          "description": "",
-          "main": "simple.js",
-          "type": "commonjs",
-          "keywords": [],
-          "author": "",
-          "license": "ISC"
-        },
-        "app_dir": "/home/bruce/github/oss/route-metrics/test/servers",
-        "config": {
-          "LOG_FILE": "route-metrics.log",
-          "OUTPUT_CONFIG": "",
-          "GARBAGE_COLLECTION": false,
-          "EVENTLOOP": true,
-          "EVENTLOOP_RESOLUTION": 20,
-          "LOG_ALL_LOADS": 0
-        }
+        "name": "@contrast/agent"
       }
     },
-    "routes": [
-      [
-        "POST https://localhost:40419/echo",
-        {
-          "200": [
-            12724
-          ]
-        }
-      ],
-      [
-        "GET https://localhost:40419/info",
-        {
-          "200": [
-            4178
-          ]
-        }
-      ],
-      [
-        "POST https://localhost:40419/meta",
-        {
-          "200": [
-            4690
-          ]
-        }
-      ]
-    ],
-    "patches": [
-      {
+    {
+      "ts": 1734980919387,
+      "type": "patch",
+      "tid": 0,
+      "entry": {
+        "name": "http"
+      }
+    },
+    {
+      "ts": 1734980919388,
+      "type": "patch",
+      "tid": 0,
+      "entry": {
+        "name": "https"
+      }
+    }
+  ],
+  "statuses": [
+    {
+      "ts": 1734980919318,
+      "type": "status",
+      "tid": 0,
+      "entry": {
+        "status": "initializing"
+      }
+    }
+  ],
+  "unknown": [],
+  "timeSeries": {
+    "proc": {
+      "count": 4,
+      "firstTime": 1734980919278,
+      "lastTime": 1734980919811,
+      "first": {
         "ts": 1734980919278,
-        "type": "patch",
+        "type": "proc",
         "tid": 0,
         "entry": {
-          "name": "@contrast/agent"
+          "cpuUser": 346,
+          "cpuSystem": 0,
+          "cpuUserAvg": 30262,
+          "cpuSystemAvg": 0,
+          "rss": 54304768,
+          "heapTotal": 5705728,
+          "heapUsed": 4374920,
+          "external": 1663301,
+          "arrayBuffers": 11348
         }
       },
-      {
-        "ts": 1734980919387,
-        "type": "patch",
+      "last": {
+        "ts": 1734980919811,
+        "type": "proc",
         "tid": 0,
         "entry": {
-          "name": "http"
+          "cpuUser": 188540,
+          "cpuSystem": 22219,
+          "cpuUserAvg": 86731.55900000001,
+          "cpuSystemAvg": 4725.331,
+          "rss": 199507968,
+          "heapTotal": 39940096,
+          "heapUsed": 25685408,
+          "external": 3631664,
+          "arrayBuffers": 4279375
         }
       },
-      {
-        "ts": 1734980919388,
-        "type": "patch",
-        "tid": 0,
-        "entry": {
-          "name": "https"
-        }
-      }
-    ],
-    "statuses": [
-      {
-        "ts": 1734980919318,
-        "type": "status",
-        "tid": 0,
-        "entry": {
-          "status": "initializing"
-        }
-      }
-    ],
-    "unknown": [],
-    "timeSeries": {
-      "proc": {
-        "count": 4,
-        "firstTime": 1734980919278,
-        "lastTime": 1734980919811,
-        "first": {
-          "ts": 1734980919278,
-          "type": "proc",
-          "tid": 0,
-          "entry": {
-            "cpuUser": 346,
-            "cpuSystem": 0,
-            "cpuUserAvg": 30262,
-            "cpuSystemAvg": 0,
-            "rss": 54304768,
-            "heapTotal": 5705728,
-            "heapUsed": 4374920,
-            "external": 1663301,
-            "arrayBuffers": 11348
-          }
-        },
-        "last": {
-          "ts": 1734980919811,
-          "type": "proc",
-          "tid": 0,
-          "entry": {
-            "cpuUser": 188540,
-            "cpuSystem": 22219,
-            "cpuUserAvg": 86731.55900000001,
-            "cpuSystemAvg": 4725.331,
-            "rss": 199507968,
-            "heapTotal": 39940096,
-            "heapUsed": 25685408,
-            "external": 3631664,
-            "arrayBuffers": 4279375
-          }
-        },
-        "cpuUserTotal": 721947,
-        "cpuSystemTotal": 51049,
-        "cpuUserPercent": 1.354497185741088,
-        "cpuSystemPercent": 0.09577673545966228
-      },
-      "gc": {
-        "count": 0,
-        "firstTime": 0,
-        "lastTime": 0,
-        "gcCount": 0,
-        "gcTime": 0
-      },
-      "eventloop": {
-        "count": 4,
-        "firstTime": 1734980919278,
-        "lastTime": 1734980919811,
-        "first": {
-          "ts": 1734980919278,
-          "type": "eventloop",
-          "tid": 0,
-          "entry": {
-            "50": 511,
-            "75": 511,
-            "90": 511,
-            "95": 511,
-            "99": 511
-          }
-        },
-        "last": {
-          "ts": 1734980919811,
-          "type": "eventloop",
-          "tid": 0,
-          "entry": {
-            "50": 83558399,
-            "75": 125763583,
-            "90": 251527167,
-            "95": 251527167,
-            "99": 251527167
-          }
-        }
-      }
+      "cpuUserTotal": 721947,
+      "cpuSystemTotal": 51049,
+      "cpuUserPercent": 1.354497185741088,
+      "cpuSystemPercent": 0.09577673545966228
     },
-    "firstTimestamp": 1734980919275,
-    "lastTimestamp": 1734980919846,
-    "firstLine": 1,
-    "lastLine": 16,
-    "meta": {
-      "keyToProperties": {
-        "POST https://localhost:40419/echo": {
-          "method": "POST",
-          "path": "/echo"
-        },
-        "GET https://localhost:40419/info": {
-          "method": "GET",
-          "path": "/info"
-        },
-        "POST https://localhost:40419/meta": {
-          "method": "POST",
-          "path": "/meta"
+    "gc": {
+      "count": 0,
+      "firstTime": 0,
+      "lastTime": 0,
+      "gcCount": 0,
+      "gcTime": 0
+    },
+    "eventloop": {
+      "count": 4,
+      "firstTime": 1734980919278,
+      "lastTime": 1734980919811,
+      "first": {
+        "ts": 1734980919278,
+        "type": "eventloop",
+        "tid": 0,
+        "entry": {
+          "50": 511,
+          "75": 511,
+          "90": 511,
+          "95": 511,
+          "99": 511
+        }
+      },
+      "last": {
+        "ts": 1734980919811,
+        "type": "eventloop",
+        "tid": 0,
+        "entry": {
+          "50": 83558399,
+          "75": 125763583,
+          "90": 251527167,
+          "95": 251527167,
+          "99": 251527167
         }
       }
     }
+  },
+  "firstTimestamp": 1734980919275,
+  "lastTimestamp": 1734980919846,
+  "firstLine": 1,
+  "lastLine": 16,
+  "meta": {
+    "keyToProperties": {
+      "POST https://localhost:40419/echo": {
+        "method": "POST",
+        "path": "/echo"
+      },
+      "GET https://localhost:40419/info": {
+        "method": "GET",
+        "path": "/info"
+      },
+      "POST https://localhost:40419/meta": {
+        "method": "POST",
+        "path": "/meta"
+      }
+    }
   }
-]
+}
