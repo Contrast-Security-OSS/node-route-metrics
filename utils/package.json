@@ -1,0 +1,11 @@
+{
+  "name": "@contrast/route-metrics-utils",
+  "version": "1.0.0",
+  "main": "index.mjs",
+  "scripts": {
+    "test": "mocha '**/*.test.*'"
+  },
+  "author": "Contrast Security, Inc.",
+  "license": "MIT",
+  "description": ""
+}
