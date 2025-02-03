@@ -1,10 +1,15 @@
 node_modules/
 cache/
-*.log
 .nyc_output/
+# contrast stuff
 contrast_effective_config.json
 contrast_system_info.json
+contrast.log
+route-metrics.log
+security.log
 # swc compiler cache
 .swc/
 # rewrite cache
 .contrast/
+output-?
+

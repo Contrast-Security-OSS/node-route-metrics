@@ -4,20 +4,23 @@
   "description": "",
   "main": "lib/index.js",
   "bin": {
-    "log-processor": "./lib/log-processor/index.js"
+    "log-processor": "./lib/log-processor/index.mjs"
   },
   "files": [
     "lib/",
     "!lib/**/*.test.js",
+    "!utils/*",
     "example/template.js"
   ],
   "scripts": {
     "prepare": "run-script-os",
     "prepare:windows": "powershell write-host -fore Red WARN: DETECT-SECRETS IS NOT USED ON WINDOWS!",
     "prepare:default": "cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
-    "test": "mocha --exclude 'node_modules/**/*' '**/*.test.js'",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "mocha 'lib/**/*.test.*' 'utils/**/*.test.*'",
+    "test:integration": "mocha 'test-integration/**/*.test.*'",
     "test:cov": "nyc npm run test",
-    "log-processor": "node ./lib/log-processor/index.js"
+    "log-processor": "node ./lib/log-processor/index.mjs"
   },
   "keywords": [
     "metrics",
@@ -38,6 +41,7 @@
   "license": "MIT",
   "dependencies": {
     "@contrast/find-package-json": "^1.2.0",
+    "@contrast/route-metrics-utils": "^1.0.0",
     "shimmer": "^1.2.1"
   },
   "devDependencies": {
@@ -52,5 +56,8 @@
     "run-script-os": "^1.1.6",
     "semver": "^7.3.7",
     "sinon": "^11.1.2"
-  }
+  },
+  "workspaces": [
+    "utils"
+  ]
 }

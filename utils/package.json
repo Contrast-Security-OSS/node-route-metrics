@@ -1,0 +1,20 @@
+{
+  "name": "@contrast/route-metrics-utils",
+  "version": "1.0.0",
+  "main": "index.mjs",
+  "scripts": {
+    "test": "mocha '**/*.test.*'"
+  },
+  "files": [
+    "index.mjs",
+    "read-log.mjs",
+    "!types/*.test.*",
+    "types/*"
+  ],
+  "author": "Contrast Security, Inc.",
+  "contributors": [
+    "Bruce A. MacNaughton <bmacnaughton@gmail.com>"
+  ],
+  "license": "MIT",
+  "description": "Utilities for parsing and analyzing route-metrics logs"
+}
