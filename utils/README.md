@@ -23,6 +23,7 @@ At this time, releasing this is 100% manual. Here's how:
 
 - handle groupings of routes as metaKeyedRoutes
 - calculate percentiles for grouped routes, including metaKeyedRoutes
-  - cannot do until entire log is processed and group created, so post-processing
+  - cannot do until groups are created, so post-processing
 - more tests.
 - automate release process.
+- make route-metrics into a mono-repo with route-metrics-viewer, log-processor, core, etc.
