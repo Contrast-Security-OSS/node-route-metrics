@@ -5,6 +5,11 @@
   "scripts": {
     "test": "mocha '**/*.test.*'"
   },
+  "files": [
+    "index.mjs",
+    "!types/*.test.*",
+    "types/*"
+  ],
   "author": "Contrast Security, Inc.",
   "license": "MIT",
   "description": ""
