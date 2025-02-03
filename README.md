@@ -104,7 +104,7 @@ always reports raw data, i.e., microseconds or, in the case of the eventloop del
 
 ## using a template
 
-A template is a JavaScript file that is used to group routes into buckets. For
+A template is a JavaScript file that is used to group routes into buckets (groups). For
 example, a route may have optional parameters or query params that would make
 them appear, by default, as separate routes.
 
@@ -123,6 +123,13 @@ it turns out to be a bad decision, appropriate fallbacks can be implemented.
 
 `route-metrics` is also written with minimal production dependencies. At this time `shimmer` is the
 only one.
+
+## route-metrics-utils
+
+The `utils` directory is a separate npm workspace and is published to npm as
+`@contrast/route-metrics-utils`. It provides common parsing code for packages
+that process `route-metrics` log files. `route-metrics`' own `log-processor`
+uses it as well as `route-metrics-viewer`.
 
 ## limitations
 
