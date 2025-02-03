@@ -7,10 +7,14 @@
   },
   "files": [
     "index.mjs",
+    "read-log.mjs",
     "!types/*.test.*",
     "types/*"
   ],
   "author": "Contrast Security, Inc.",
+  "contributors": [
+    "Bruce A. MacNaughton <bmacnaughton@gmail.com>"
+  ],
   "license": "MIT",
-  "description": ""
+  "description": "Utilities for parsing and analyzing route-metrics logs"
 }
