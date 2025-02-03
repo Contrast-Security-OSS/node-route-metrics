@@ -16,9 +16,9 @@
     "prepare": "run-script-os",
     "prepare:windows": "powershell write-host -fore Red WARN: DETECT-SECRETS IS NOT USED ON WINDOWS!",
     "prepare:default": "cp .githooks/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit",
-    "test": "mocha --exclude 'node_modules/**/*' --exclude 'utils/**/*' '**/*.test.?js' '**/*.test.js'",
-    "test:unit": "mocha 'lib/**/*.test.*' utils/**/*.test.*",
-    "test:integration": "mocha 'test/**/*.test.*'",
+    "test": "npm run test:unit && npm run test:integration",
+    "test:unit": "mocha 'lib/**/*.test.*' 'utils/**/*.test.*'",
+    "test:integration": "mocha 'test-integration/**/*.test.*'",
     "test:cov": "nyc npm run test",
     "log-processor": "node ./lib/log-processor/index.mjs"
   },
